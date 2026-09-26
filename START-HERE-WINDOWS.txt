@@ -1,0 +1,22 @@
+LUXURIOUS HUB — START HERE
+
+1) Extract this ZIP.
+2) Open the folder in Command Prompt.
+3) npm install
+4) npx wrangler login
+5) npx wrangler d1 create luxurious-hub-db --location apac --update-config
+6) npx wrangler r2 bucket create luxurious-hub-images
+7) npx wrangler d1 migrations apply luxurious-hub-db --remote
+8) npx wrangler secret put ADMIN_USERNAME
+9) npx wrangler secret put ADMIN_PASSWORD
+10) npm run dev   (testing)
+11) npm run deploy (live Cloudflare deployment)
+
+Admin page after deployment:
+/admin.html
+
+Then add:
+- real product images from Admin
+- WhatsApp/phone/email/address in Admin > Settings
+- Razorpay secrets when ready
+- your Cloudflare custom domain
