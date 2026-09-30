@@ -1,3 +1,4 @@
+const BUILD_VERSION='2026-09-30-1255';
 const state={products:[],cart:JSON.parse(localStorage.getItem('lh_cart')||'[]'),wishlist:JSON.parse(localStorage.getItem('lh_wish')||'[]'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
 const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech'};
 const rupee=n=>'₹'+Number(n).toLocaleString('en-IN');
