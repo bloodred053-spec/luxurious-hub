@@ -44,5 +44,36 @@ async function adminSettings(){const r=await api('/api/admin/settings');csrf=r.c
 async function adminLogout(){await api('/api/admin/logout',{method:'POST'});adminLogin()}
 function applyOffer(){navigator.clipboard?.writeText('LIVE15');state.coupon={code:'LIVE15',type:'percent',value:15,max_discount:500};openCart()}
 function toggleFaq(btn){btn.parentElement.classList.toggle('open')}
-const searchInput=document.getElementById('searchInput');const searchResults=document.getElementById('searchResults');if(searchInput)searchInput.addEventListener('input',()=>{const q=searchInput.value.toLowerCase().trim();if(!q){searchResults.classList.remove('show');return}const hits=allProducts.filter(p=>(p.name+' '+p.cat+' '+p.spec).toLowerCase().includes(q)).slice(0,5);searchResults.innerHTML=hits.length?hits.map(p=>'<button class="result" style="width:100%;background:#fff;border:0;text-align:left" onclick="openProduct('+p.id+')"><img src="'+p.image+'"><span>'+p.name+'<small style="display:block;color:#818680">'+rupee(p.price)+'</small></span></button>').join(''):'<div style="padding:15px;color:#777;font-size:12px">No products found.</div>';searchResults.classList.add('show')});document.addEventListener('click',e=>{if(!e.target.closest('.search'))searchResults.classList.remove('show')});
+const searchInput=document.getElementById('searchInput')||document.getElementById('search');
+let searchResults=document.getElementById('searchResults');
+if(searchInput){
+  if(!searchResults){
+    searchResults=document.createElement('div');
+    searchResults.id='searchResults';
+    searchResults.className='search-results';
+    searchInput.parentElement.appendChild(searchResults);
+  }
+  searchInput.addEventListener('input',()=>{
+    const q=searchInput.value.toLowerCase().trim();
+    if(!q){
+      searchResults.classList.remove('show');
+      searchResults.innerHTML='';
+      return;
+    }
+    const hits=state.products.filter(p=>
+      (p.name+' '+p.category+' '+JSON.stringify(p.specifications||{}))
+      .toLowerCase()
+      .includes(q)
+    ).slice(0,5);
+    searchResults.innerHTML=hits.length
+      ?hits.map(p=>`<button class="result" type="button" style="width:100%;background:#fff;border:0;text-align:left" onclick="openProduct(${p.id})"><span>${p.name}<small style="display:block;color:#818680">${rupee(p.price)}</small></span></button>`).join('')
+      :'<div style="padding:15px;color:#777;font-size:12px">No products found.</div>';
+    searchResults.classList.add('show');
+  });
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search')&&searchResults){
+    searchResults.classList.remove('show');
+  }
+});
 load().catch(err=>{document.getElementById('productGrid').innerHTML='<div class="panel">Store is starting up. Please refresh in a moment.</div>'});updateCounts();
