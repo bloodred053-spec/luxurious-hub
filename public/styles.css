@@ -201,3 +201,48 @@
     display:none !important;
   }
 }
+/* FINAL TRACK ORDER POSITION */
+@media (min-width:701px){
+  .nav{
+    position:relative !important;
+    display:block !important;
+    width:100% !important;
+    min-height:32px !important;
+    padding:0 0 13px 0 !important;
+  }
+
+  .navlinks{
+    display:flex !important;
+    align-items:center !important;
+    gap:24px !important;
+    width:100% !important;
+    max-width:none !important;
+    padding-right:190px !important;
+    overflow:visible !important;
+    white-space:nowrap !important;
+  }
+
+  .navlinks a{
+    position:static !important;
+    white-space:nowrap !important;
+    display:block !important;
+  }
+
+  .nav > .track{
+    position:absolute !important;
+    right:0 !important;
+    top:0 !important;
+    left:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:block !important;
+    white-space:nowrap !important;
+    z-index:10 !important;
+  }
+}
+
+@media (max-width:700px){
+  .nav > .track{
+    display:none !important;
+  }
+}
