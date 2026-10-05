@@ -1,6 +1,30 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Luxurious Hub | Watches, Perfumes, Attar & Mobile Accessories</title><meta name="description" content="Shop watches, perfumes, attars and mobile accessories at Luxurious Hub."><link rel="stylesheet" href="/styles.css"></head><body>
 <div class="topbar"><span>A little luxury, every day.</span><span>Free shipping above ₹499</span><span>Cash on Delivery available</span></div>
-<header class="header"><div class="shell"><div class="head"><a class="brand" href="/"><div class="logo">LH</div><div><strong>LUXURIOUS HUB</strong><span>THE EVERYDAY EDIT</span></div></a><div class="search"><input id="search" placeholder="Search for your next favourite..."></div><div class="actions"><button class="action" onclick="openAccount()">Account</button><button class="action" onclick="openWishlist()">Wishlist <span id="wishCount">0</span></button><button class="action" onclick="openCart()">Bag <span id="bagCount">0</span></button></div><nav><div class="navlinks"><a href="#shop">Shop All</a><a href="#watches">Watches</a><a href="#perfumes">Perfumes</a><a href="#attar">Attar</a><a href="#accessories">Mobile Accessories</a><a href="#offers">The Offer Edit</a><a href="#track" onclick="trackOrder();return false">Track your order&nbsp; →</a></div></nav></div></div></header>
+<header class="header"><div class="shell"><div class="head"><a class="brand" href="/"><div class="logo">LH</div><div><strong>LUXURIOUS HUB</strong><span>THE EVERYDAY EDIT</span></div></a><div class="search"><input id="search" placeholder="Search for your next favourite..."></div><div class="actions"><button class="action" onclick="openAccount()">Account</button><button class="action" onclick="openWishlist()">Wishlist <span id="wishCount">0</span></button><button class="action" onclick="openCart()">Bag <span id="bagCount">0</span></button></div><nav>
+  <div class="navlinks">
+    <a href="#shop">Shop All</a>
+    <a href="#watches">Watches</a>
+    <a href="#perfumes">Perfumes</a>
+    <a href="#attar">Attar</a>
+    <a href="#accessories">Mobile Accessories</a>
+    <a href="#offers">The Offer Edit</a>
+    <a href="#track" onclick="trackOrder();return false">Track your order →</a>
+  </div>
+
+  <button class="mobile-menu-btn" type="button" onclick="document.getElementById('mobileMenu').classList.toggle('show')">
+    ☰ Menu
+  </button>
+
+  <div id="mobileMenu" class="mobile-menu">
+    <a href="#shop" onclick="document.getElementById('mobileMenu').classList.remove('show')">Shop All</a>
+    <a href="#watches" onclick="document.getElementById('mobileMenu').classList.remove('show')">Watches</a>
+    <a href="#perfumes" onclick="document.getElementById('mobileMenu').classList.remove('show')">Perfumes</a>
+    <a href="#attar" onclick="document.getElementById('mobileMenu').classList.remove('show')">Attar</a>
+    <a href="#accessories" onclick="document.getElementById('mobileMenu').classList.remove('show')">Mobile Accessories</a>
+    <a href="#offers" onclick="document.getElementById('mobileMenu').classList.remove('show')">The Offer Edit</a>
+    <a href="#track" onclick="document.getElementById('mobileMenu').classList.remove('show');trackOrder();return false">Track your order →</a>
+  </div>
+</nav></div></div></header>
 <main><div class="shell">
 <section class="hero"><div class="hero-copy"><div class="eyebrow">Curated for your everyday</div><h1>Style. Fragrance. <em>Tech.</em><br><em>All in one place.</em></h1><p>Shop watches, perfumes, attars and mobile accessories with a premium everyday edit.</p><div class="cta"><button class="btn" onclick="showCategory('Watches')">Shop Watches →</button><button class="btn alt" onclick="showCategory('Perfumes')">Explore Perfumes</button></div><button class="btn ghost" onclick="showCategory('Mobile Accessories')">Discover everyday tech →</button></div><div class="hero-art"><div class="watch-art"><div class="watch-face"></div></div></div></section>
 <div class="benefits"><div>Free delivery above ₹499</div><div>Cash on Delivery</div><div>Thoughtfully selected</div><div>Everyday value</div></div>
