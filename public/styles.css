@@ -397,3 +397,83 @@
     display:none !important;
   }
 }
+/* MOBILE MENU - FLIPKART STYLE */
+
+@media(max-width:700px){
+
+  /* Remove bottom mobile bar */
+  .mobilebar,
+  .mobile-bar{
+    display:none !important;
+  }
+
+  /* Menu button */
+  .mobile-menu-btn{
+    display:block !important;
+    width:100%;
+    background:#fff;
+    border:1px solid #dddeda;
+    padding:12px 14px;
+    text-align:left;
+    font-size:14px;
+    color:#18392b;
+    cursor:pointer;
+  }
+
+  /* Dropdown card */
+  .mobile-menu{
+    display:none;
+    position:absolute;
+    left:0;
+    right:0;
+    top:calc(100% + 6px);
+    background:#fff;
+    border:1px solid #e1e1dc;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+    z-index:100;
+    max-height:70vh;
+    overflow:auto;
+  }
+
+  .mobile-menu.show{
+    display:block !important;
+  }
+
+  /* Each menu row */
+  .mobile-menu a{
+    display:flex !important;
+    align-items:center;
+    justify-content:space-between;
+    padding:15px 16px;
+    border-bottom:1px solid #eeeeea;
+    color:#333;
+    text-decoration:none;
+    font-size:14px;
+    background:#fff;
+  }
+
+  .mobile-menu a::after{
+    content:"›";
+    font-size:18px;
+    color:#888;
+  }
+
+  .mobile-menu a:last-child{
+    border-bottom:0;
+  }
+
+  .mobile-menu a:hover{
+    background:#f7f7f3;
+  }
+
+  nav{
+    position:relative !important;
+  }
+}
+
+@media(min-width:701px){
+  .mobile-menu-btn,
+  .mobile-menu{
+    display:none !important;
+  }
+}
