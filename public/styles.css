@@ -739,3 +739,104 @@
     background:transparent !important;
   }
 }
+/* MOBILE HEADER - FINAL POLISH */
+@media(max-width:700px){
+
+  /* Search full width + centered */
+  header .head,
+  header .head1{
+    display:grid !important;
+    grid-template-columns:38px 1fr auto !important;
+    grid-template-rows:auto auto !important;
+    column-gap:8px !important;
+    row-gap:12px !important;
+    width:100% !important;
+  }
+
+  header .search{
+    grid-column:1 / -1 !important;
+    grid-row:2 !important;
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    justify-self:stretch !important;
+  }
+
+  header .search input{
+    display:block !important;
+    width:100% !important;
+    height:48px !important;
+    box-sizing:border-box !important;
+    padding:0 16px !important;
+    text-align:center !important;
+    font-size:14px !important;
+  }
+
+  /* Account / Wishlist / Bag */
+  header .actions{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:8px !important;
+    width:auto !important;
+  }
+
+  header .actions .action{
+    width:30px !important;
+    height:32px !important;
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+    background:none !important;
+    font-size:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    position:relative !important;
+  }
+
+  /* Proper Account icon */
+  header .actions .action:nth-child(1)::before{
+    content:"";
+    width:20px;
+    height:20px;
+    display:block;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f241f' stroke-width='1.7'%3E%3Ccircle cx='12' cy='8' r='3.2'/%3E%3Cpath d='M5.5 20c.8-3.5 3-5.4 6.5-5.4s5.7 1.9 6.5 5.4'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+
+  /* Proper Wishlist icon */
+  header .actions .action:nth-child(2)::before{
+    content:"";
+    width:22px;
+    height:22px;
+    display:block;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f241f' stroke-width='1.7'%3E%3Cpath d='M20.8 8.8c0 5.2-8.8 10.1-8.8 10.1S3.2 14 3.2 8.8A4.5 4.5 0 0 1 12 6.3a4.5 4.5 0 0 1 8.8 2.5Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+
+  /* Proper Bag icon */
+  header .actions .action:nth-child(3)::before{
+    content:"";
+    width:22px;
+    height:22px;
+    display:block;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f241f' stroke-width='1.7'%3E%3Cpath d='M5 8.5h14l-1 11H6l-1-11Z'/%3E%3Cpath d='M9 9V6.5a3 3 0 0 1 6 0V9'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+
+  header .actions .action span{
+    display:none !important;
+  }
+
+  header .actions .badge{
+    position:absolute !important;
+    top:-3px !important;
+    right:-3px !important;
+    width:14px !important;
+    min-width:14px !important;
+    height:14px !important;
+    padding:0 !important;
+    margin:0 !important;
+    font-size:8px !important;
+  }
+}
