@@ -630,3 +630,112 @@
     display:none !important;
   }
 }
+/* MOBILE HEADER FINAL */
+@media(max-width:700px){
+
+  header .head1{
+    display:grid !important;
+    grid-template-columns:42px 1fr auto !important;
+    grid-template-rows:auto auto !important;
+    gap:10px !important;
+    align-items:center !important;
+    padding:12px 8px 14px !important;
+  }
+
+  /* Brand */
+  header .brand{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    justify-self:start !important;
+  }
+
+  /* Search centered */
+  header .search{
+    grid-column:1 / -1 !important;
+    grid-row:2 !important;
+    width:100% !important;
+    margin:0 auto !important;
+  }
+
+  header .search input{
+    width:100% !important;
+    text-align:center !important;
+    padding:13px 18px !important;
+    font-size:14px !important;
+  }
+
+  /* Account / Wishlist / Bag icons */
+  header .actions{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+    margin:0 !important;
+  }
+
+  header .actions .action{
+    position:relative !important;
+    display:flex !important;
+    width:28px !important;
+    height:34px !important;
+    padding:0 !important;
+    margin:0 !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:0 !important;
+    border:0 !important;
+    background:transparent !important;
+  }
+
+  /* Account */
+  header .actions .action:nth-child(1)::before{
+    content:"♙";
+    font-size:24px;
+    color:#222;
+  }
+
+  /* Wishlist */
+  header .actions .action:nth-child(2)::before{
+    content:"♡";
+    font-size:27px;
+    color:#222;
+  }
+
+  /* Bag */
+  header .actions .action:nth-child(3)::before{
+    content:"🛒";
+    font-size:20px;
+  }
+
+  /* Badges */
+  header .actions .badge{
+    position:absolute !important;
+    top:-2px !important;
+    right:-5px !important;
+    min-width:14px !important;
+    height:14px !important;
+    padding:0 3px !important;
+    font-size:8px !important;
+    line-height:14px !important;
+    background:#18392b !important;
+  }
+
+  /* Menu icon */
+  header nav{
+    position:absolute !important;
+    left:8px !important;
+    top:18px !important;
+    width:34px !important;
+    z-index:200 !important;
+  }
+
+  .mobile-menu-btn{
+    width:34px !important;
+    height:34px !important;
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+  }
+}
