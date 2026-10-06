@@ -477,3 +477,70 @@
     display:none !important;
   }
 }
+/* FINAL MOBILE DROPDOWN */
+@media(max-width:700px){
+
+  nav{
+    position:relative !important;
+    display:block !important;
+    width:100% !important;
+    overflow:visible !important;
+  }
+
+  .navlinks{
+    display:none !important;
+  }
+
+  .mobile-menu-btn{
+    display:block !important;
+    width:170px;
+    background:#fff;
+    border:1px solid #dddeda;
+    padding:12px 14px;
+    text-align:left;
+    font-size:14px;
+    color:#18392b;
+    cursor:pointer;
+  }
+
+  .mobile-menu{
+    position:static !important;
+    display:none;
+    width:170px;
+    margin-top:6px;
+    background:#fff;
+    border:1px solid #dddeda;
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+    z-index:100;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+
+  .mobile-menu.show{
+    display:block !important;
+  }
+
+  .mobile-menu a{
+    display:flex !important;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    padding:14px 15px;
+    border-bottom:1px solid #eeeeea;
+    color:#333;
+    text-decoration:none;
+    font-size:14px;
+    background:#fff;
+    box-sizing:border-box;
+  }
+
+  .mobile-menu a::after{
+    content:"›";
+    color:#999;
+    font-size:18px;
+  }
+
+  .mobile-menu a:last-child{
+    border-bottom:0;
+  }
+}
