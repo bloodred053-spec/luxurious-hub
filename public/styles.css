@@ -969,3 +969,34 @@
     z-index:5 !important;
   }
 }
+/* MOBILE BAG + WISHLIST COUNT */
+@media(max-width:700px){
+
+  header .actions .action{
+    position:relative !important;
+  }
+
+  header .actions .action #wishCount,
+  header .actions .action #bagCount{
+    display:grid !important;
+    position:absolute !important;
+    top:-5px !important;
+    right:-5px !important;
+    min-width:16px !important;
+    width:16px !important;
+    height:16px !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:50% !important;
+    background:#d71920 !important;
+    color:#fff !important;
+    border:1px solid #fff !important;
+    font-size:9px !important;
+    font-weight:700 !important;
+    line-height:16px !important;
+    text-align:center !important;
+    align-items:center !important;
+    justify-content:center !important;
+    z-index:50 !important;
+  }
+}
