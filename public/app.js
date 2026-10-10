@@ -10,20 +10,37 @@ function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*1
 function render(list,target,limit=8){document.getElementById(target).innerHTML=list.filter(p=>p.active).slice(0,limit).map(card).join('')}
 function renderCategoryWithMore(category,target){
   const items=state.products.filter(p=>p.category===category&&p.active);
-  render(items,target,4);
   const grid=document.getElementById(target);
   const buttonId=target+'ViewAll';
-  document.getElementById(buttonId)?.remove();
 
-  if(items.length>4&&grid){
-    const btn=document.createElement('button');
-    btn.id=buttonId;
-    btn.className='btn alt';
-    btn.textContent='View All '+category+' →';
-    btn.style.cssText='display:block;margin:18px auto 0';
-    btn.onclick=()=>showCategory(category);
-    grid.insertAdjacentElement('afterend',btn);
-  }
+  document.getElementById(buttonId)?.remove();
+  if(!grid)return;
+
+  render(items,target,4);
+  if(items.length<=4)return;
+
+  const btn=document.createElement('button');
+  btn.id=buttonId;
+  btn.className='btn alt';
+  btn.textContent='View All '+category+' →';
+  btn.style.cssText='display:block;margin:18px auto 0';
+  btn.dataset.expanded='false';
+
+  btn.onclick=()=>{
+    const expanded=btn.dataset.expanded==='true';
+
+    if(expanded){
+      render(items,target,4);
+      btn.dataset.expanded='false';
+      btn.textContent='View All '+category+' →';
+    }else{
+      render(items,target,items.length);
+      btn.dataset.expanded='true';
+      btn.textContent='Show Less ↑';
+    }
+  };
+
+  grid.insertAdjacentElement('afterend',btn);
 }
 
 async function load(){
