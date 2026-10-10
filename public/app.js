@@ -8,7 +8,36 @@ function updateCounts(){const c=state.cart.reduce((s,x)=>s+Number(x.qty||0),0);c
 function placeholder(cat){return `<div class="placeholder ${ph[cat]||'ph-tech'}">${cat}</div>`}
 function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*100));return `<article class="product"><div class="product-media">${p.image_url?`<img src="${p.image_url}" alt="${p.name}" loading="lazy">`:placeholder(p.category)}<span class="badge">${p.tag||'New'}</span><button class="heart" onclick="toggleWish(${p.id})">${state.wishlist.includes(Number(p.id))?'♥':'♡'}</button></div><div class="meta"><div class="muted">${p.category}</div><div class="name">${p.name}</div><div class="muted">${p.rating?p.rating.toFixed(1)+' ★':'New'} · ${p.stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span><span class="off">${off}% off</span></div><div class="mini-actions"><button class="mini" ${p.stock<1?'disabled':''} onclick="addCart(${p.id})">＋ Add to Cart</button><button class="mini" ${p.stock<1?'disabled':''} onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
 function render(list,target,limit=8){document.getElementById(target).innerHTML=list.filter(p=>p.active).slice(0,limit).map(card).join('')}
-async function load(){const cfg=await api('/api/config');state.config=cfg;const d=await api('/api/products');state.products=d.products;render(state.products,'productGrid',8);render(state.products.filter(p=>p.category==='Watches'),'watchGrid',4);render(state.products.filter(p=>p.category==='Perfumes'),'perfumeGrid',4);render(state.products.filter(p=>p.category==='Attar'),'attarGrid',4);render(state.products.filter(p=>p.category==='Mobile Accessories'),'accessoryGrid',4);updateCounts()}
+function renderCategoryWithMore(category,target){
+  const items=state.products.filter(p=>p.category===category&&p.active);
+  render(items,target,4);
+  const grid=document.getElementById(target);
+  const buttonId=target+'ViewAll';
+  document.getElementById(buttonId)?.remove();
+
+  if(items.length>4&&grid){
+    const btn=document.createElement('button');
+    btn.id=buttonId;
+    btn.className='btn alt';
+    btn.textContent='View All '+category+' →';
+    btn.style.cssText='display:block;margin:18px auto 0';
+    btn.onclick=()=>showCategory(category);
+    grid.insertAdjacentElement('afterend',btn);
+  }
+}
+
+async function load(){
+  const cfg=await api('/api/config');
+  state.config=cfg;
+  const d=await api('/api/products');
+  state.products=d.products;
+  render(state.products,'productGrid',8);
+  renderCategoryWithMore('Watches','watchGrid');
+  renderCategoryWithMore('Perfumes','perfumeGrid');
+  renderCategoryWithMore('Attar','attarGrid');
+  renderCategoryWithMore('Mobile Accessories','accessoryGrid');
+  updateCounts();
+}
 function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);document.getElementById('productTitle').textContent=cat==='ALL'?'All products':`The ${String(cat).toLowerCase()} edit.`;render(list,'productGrid',40);document.getElementById('featured').scrollIntoView({behavior:'smooth'})}
 function toggleWish(id){state.wishlist=state.wishlist.includes(id)?state.wishlist.filter(x=>x!==id):[...state.wishlist,id];save();render(state.products,'productGrid',8);render(state.products.filter(p=>p.category==='Watches'),'watchGrid',4);render(state.products.filter(p=>p.category==='Perfumes'),'perfumeGrid',4);render(state.products.filter(p=>p.category==='Attar'),'attarGrid',4);render(state.products.filter(p=>p.category==='Mobile Accessories'),'accessoryGrid',4)}
 function addCart(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||p.stock<1)return alert('Out of stock');const i=state.cart.find(x=>Number(x.id)===Number(id));if(i){if(i.qty>=p.stock)return alert('Maximum available stock reached');i.qty++}else state.cart.push({id:Number(id),qty:1});save()}
