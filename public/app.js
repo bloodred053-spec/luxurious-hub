@@ -79,7 +79,248 @@ let csrf='';async function adminSession(){const s=await api('/api/admin/session'
 function adminLogin(){document.getElementById('adminRoot').innerHTML='<div style="max-width:420px;margin:40px auto"><div class="eyebrow">Luxurious Hub</div><h2 style="font-size:36px">Admin Login</h2><form id="loginForm" class="formgrid" style="margin-top:18px"><input id="au" required placeholder="Username"><input id="ap" required type="password" placeholder="Password"><button class="btn full">Sign In</button></form><div id="loginMsg" class="muted" style="margin-top:10px"></div></div>';document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/admin/login',{method:'POST',body:JSON.stringify({username:document.getElementById('au').value,password:document.getElementById('ap').value})});csrf=r.csrf;adminHome()}catch(err){document.getElementById('loginMsg').textContent=err.message}}}
 function adminHome(){document.getElementById('adminRoot').innerHTML='<button class="action" style="float:right" onclick="closeModal()">✕</button><div class="eyebrow">Luxurious Hub</div><h2 style="font-size:36px">Admin Dashboard</h2><div class="admin-tabs"><button class="mini" onclick="adminProducts()">Products</button><button class="mini" onclick="adminOrders()">Orders</button><button class="mini" onclick="adminCoupons()">Coupons</button><button class="mini" onclick="adminCustomers()">Customers</button><button class="mini" onclick="adminSettings()">Settings</button><button class="mini" onclick="adminLogout()">Logout</button></div><div id="adminPanel"></div>';adminProducts()}
 async function adminProducts(){const r=await api('/api/admin/products');csrf=r.csrf;document.getElementById('adminPanel').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong>Products</strong><button class="btn" onclick="adminEditProduct()">+ Add Product</button></div><table class="admin-table"><thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Image</th><th></th></tr></thead><tbody>'+r.products.map(p=>'<tr><td>'+p.name+'<br><span class="muted">'+p.category+'</span></td><td>'+rupee(p.price)+'</td><td>'+p.stock+'</td><td>'+ (p.image_url?'<span class="status">Uploaded</span>':'<span class="muted">No image</span>') +'</td><td><button class="mini" onclick="adminEditProduct('+p.id+')">Edit</button></td></tr>').join('')+'</tbody></table>'}
-async function adminEditProduct(id){const p=id?(await api('/api/products/'+id)).product:{name:'',category:'Watches',price:0,mrp:0,stock:0,tag:'New',rating:0,description:'',specifications:{},slug:''};document.getElementById('adminPanel').innerHTML='<form id="pform" class="formgrid"><input id="pn" required placeholder="Name" value="'+String(p.name).replace(/"/g,'&quot;')+'"><input id="pslug" placeholder="Slug" value="'+String(p.slug||'').replace(/"/g,'&quot;')+'"><select id="pc"><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobile Accessories</option></select><input id="pp" type="number" required placeholder="Selling price" value="'+p.price+'"><input id="pm" type="number" required placeholder="MRP" value="'+p.mrp+'"><input id="pst" type="number" required placeholder="Stock" value="'+p.stock+'"><input id="pt" placeholder="Badge" value="'+String(p.tag||'').replace(/"/g,'&quot;')+'"><input id="pr" type="number" step="0.1" placeholder="Rating" value="'+Number(p.rating||0)+'"><textarea id="pd" class="full" rows="4" placeholder="Description">'+String(p.description||'')+'</textarea><textarea id="ps" class="full" rows="5" placeholder="Specifications JSON">'+JSON.stringify(p.specifications||{},null,2)+'</textarea><div class="full panel"><strong>Upload product image</strong><input id="pi" type="file" accept="image/*" style="display:block;margin-top:8px"><div id="pip" class="muted" style="margin-top:7px">'+(p.image_url?'Current image uploaded. Select a new file to replace/add.':'No image yet.')+'</div></div><div class="full"><button class="btn">Save Product</button> <button type="button" class="mini" onclick="adminProducts()">Cancel</button></div></form>';document.getElementById('pc').value=p.category;document.getElementById('pform').onsubmit=async e=>{e.preventDefault();let specs={};try{specs=JSON.parse(document.getElementById('ps').value||'{}')}catch{alert('Specifications must be valid JSON');return}const payload={slug:document.getElementById('pslug').value,name:document.getElementById('pn').value,category:document.getElementById('pc').value,price:Number(document.getElementById('pp').value),mrp:Number(document.getElementById('pm').value),stock:Number(document.getElementById('pst').value),tag:document.getElementById('pt').value,rating:Number(document.getElementById('pr').value||0),description:document.getElementById('pd').value,specifications:specs,active:true};let productId=id;if(id)await api('/api/admin/products/'+id,{method:'PUT',headers:{'X-CSRF-Token':csrf},body:JSON.stringify(payload)});else productId=(await api('/api/admin/products',{method:'POST',headers:{'X-CSRF-Token':csrf},body:JSON.stringify(payload)})).id;const file=document.getElementById('pi').files?.[0];if(file){const fd=new FormData();fd.append('file',file);await fetch('/api/admin/products/'+productId+'/image',{method:'POST',headers:{'X-CSRF-Token':csrf},body:fd,credentials:'same-origin'})}await load();adminProducts();alert('Product saved')}}
+async function adminEditProduct(id) {
+  const p = id
+    ? (await api('/api/products/' + id)).product
+    : {
+        name: '',
+        category: 'Watches',
+        price: 0,
+        mrp: 0,
+        stock: 0,
+        tag: 'New',
+        rating: 0,
+        description: '',
+        specifications: {},
+        slug: ''
+      };
+
+  const safe = v => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const labelStyle =
+    'display:block;font-size:13px;font-weight:600;color:#333';
+
+  const inputStyle =
+    'display:block;width:100%;box-sizing:border-box;' +
+    'margin-top:6px;padding:12px;border:1px solid #dddeda;' +
+    'background:#fff';
+
+  document.getElementById('adminPanel').innerHTML = `
+    <button type="button" class="mini"
+      onclick="adminProducts()">← Back to Products</button>
+
+    <h2 style="margin:16px 0">
+      ${id ? 'Edit Product' : 'Add Product'}
+    </h2>
+
+    <p style="font-size:12px;color:#666">
+      Fill in the details below and then click Save Product.
+    </p>
+
+    <form id="pform" class="formgrid" style="gap:16px">
+
+      <label class="full" style="${labelStyle}">
+        1. Product Name
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Name customers will see on your website.
+        </small>
+        <input id="pn" required
+          style="${inputStyle}"
+          placeholder="e.g. Titan Analog Watch"
+          value="${safe(p.name)}">
+      </label>
+
+      <label style="${labelStyle}">
+        2. URL Slug (Optional)
+        <input id="pslug"
+          style="${inputStyle}"
+          placeholder="e.g. titan-analog-watch"
+          value="${safe(p.slug || '')}">
+      </label>
+
+      <label style="${labelStyle}">
+        3. Product Category
+        <select id="pc" style="${inputStyle}">
+          <option>Watches</option>
+          <option>Perfumes</option>
+          <option>Attar</option>
+          <option>Mobile Accessories</option>
+        </select>
+      </label>
+
+      <label style="${labelStyle}">
+        4. Selling Price (₹)
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Final price customer pays. Example: 24999
+        </small>
+        <input id="pp" type="number" min="0" step="1"
+          required style="${inputStyle}"
+          value="${p.price}">
+      </label>
+
+      <label style="${labelStyle}">
+        5. MRP / Original Price (₹)
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Original price before discount. Example: 32999
+        </small>
+        <input id="pm" type="number" min="0" step="1"
+          required style="${inputStyle}"
+          value="${p.mrp}">
+      </label>
+
+      <label style="${labelStyle}">
+        6. Available Quantity / Stock
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Number of units available to sell. Example: 5
+        </small>
+        <input id="pst" type="number" min="0" step="1"
+          required style="${inputStyle}"
+          value="${p.stock}">
+      </label>
+
+      <label style="${labelStyle}">
+        7. Product Badge
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Small tag shown on the product image.
+        </small>
+        <input id="pt"
+          style="${inputStyle}"
+          placeholder="New / Featured / Bestseller"
+          value="${safe(p.tag || '')}">
+      </label>
+
+      <label style="${labelStyle}">
+        8. Product Rating (0–5)
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Enter a rating from 0 to 5.
+        </small>
+        <input id="pr" type="number" min="0" max="5"
+          step="0.1" style="${inputStyle}"
+          value="${Number(p.rating || 0)}">
+      </label>
+
+      <label class="full" style="${labelStyle}">
+        9. Product Description
+        <small style="display:block;font-weight:400;margin-top:4px">
+          A short description customers read on your website.
+        </small>
+        <textarea id="pd" rows="4"
+          style="${inputStyle}"
+          placeholder="Describe the product, material, features and benefits.">${safe(p.description || '')}</textarea>
+      </label>
+
+      <label class="full" style="${labelStyle}">
+        10. Product Specifications (JSON)
+        <small style="display:block;font-weight:400;margin-top:4px">
+          Technical details in JSON format. Keep the braces and quotation marks valid.
+        </small>
+        <textarea id="ps" rows="7"
+          style="${inputStyle};font-family:monospace"
+          placeholder='{"Brand":"Titan","Display Type":"Analog"}'>${safe(JSON.stringify(p.specifications || {}, null, 2))}</textarea>
+      </label>
+
+      <div class="full panel">
+        <strong>11. Product Image</strong>
+        <p class="muted">
+          Choose a clear product photo (PNG, JPG or WebP, up to 6 MB).
+        </p>
+        <input id="pi" type="file" accept="image/*"
+          style="display:block;width:100%;margin-top:8px">
+        <div id="pip" class="muted" style="margin-top:8px">
+          ${p.image_url
+            ? 'Current image is uploaded. Select a file only to replace it.'
+            : 'No image uploaded yet.'}
+        </div>
+      </div>
+
+      <div class="full">
+        <button class="btn" type="submit">Save Product</button>
+        <button type="button" class="mini"
+          onclick="adminProducts()">Cancel</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('pc').value = p.category;
+
+  document.getElementById('pform').onsubmit = async e => {
+    e.preventDefault();
+
+    let specs = {};
+    try {
+      specs = JSON.parse(
+        document.getElementById('ps').value || '{}'
+      );
+    } catch {
+      alert('Specifications must be valid JSON.');
+      return;
+    }
+
+    const payload = {
+      slug: document.getElementById('pslug').value,
+      name: document.getElementById('pn').value,
+      category: document.getElementById('pc').value,
+      price: Number(document.getElementById('pp').value),
+      mrp: Number(document.getElementById('pm').value),
+      stock: Number(document.getElementById('pst').value),
+      tag: document.getElementById('pt').value,
+      rating: Number(document.getElementById('pr').value || 0),
+      description: document.getElementById('pd').value,
+      specifications: specs,
+      active: true
+    };
+
+    try {
+      let productId = id;
+
+      if (id) {
+        await api('/api/admin/products/' + id, {
+          method: 'PUT',
+          headers: {'X-CSRF-Token': csrf},
+          body: JSON.stringify(payload)
+        });
+      } else {
+        const result = await api('/api/admin/products', {
+          method: 'POST',
+          headers: {'X-CSRF-Token': csrf},
+          body: JSON.stringify(payload)
+        });
+        productId = result.id;
+      }
+
+      const file = document.getElementById('pi').files?.[0];
+
+      if (file) {
+        const fd = new FormData();
+        fd.append('file', file);
+
+        const response = await fetch(
+          '/api/admin/products/' + productId + '/image',
+          {
+            method: 'POST',
+            headers: {'X-CSRF-Token': csrf},
+            credentials: 'same-origin',
+            body: fd
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error || 'Image upload failed');
+        }
+      }
+
+      await load();
+      await adminProducts();
+      alert('Product saved successfully!');
+    } catch (err) {
+      alert(err.message || 'Could not save product.');
+    }
+  };
 async function adminOrders(){const r=await api('/api/admin/orders');csrf=r.csrf;document.getElementById('adminPanel').innerHTML='<table class="admin-table"><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>'+r.orders.map(o=>'<tr><td><strong>'+o.id+'</strong><br><span class="muted">'+new Date(o.created_at).toLocaleString('en-IN')+'</span></td><td>'+o.customer_name+'<br>'+o.phone+'</td><td>'+rupee(o.total)+'</td><td><select onchange="setOrderStatus(\''+o.id+'\',this.value)">'+['Pending','Confirmed','Processing','Packed','Shipped','Out for Delivery','Delivered','Cancelled','Returned'].map(s=>'<option '+(o.status===s?'selected':'')+'>'+s+'</option>').join('')+'</select></td></tr>').join('')+'</tbody></table>'}
 async function setOrderStatus(id,status){await api('/api/admin/orders/'+id,{method:'PATCH',headers:{'X-CSRF-Token':csrf},body:JSON.stringify({status})});adminOrders()}
 async function adminCoupons(){const r=await api('/api/admin/coupons');csrf=r.csrf;document.getElementById('adminPanel').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><strong>Coupons</strong><button class="btn" onclick="adminAddCoupon()">+ Add Coupon</button></div>'+r.coupons.map(c=>'<div class="panel" style="margin-top:9px"><strong>'+c.code+'</strong> · '+(c.type==='percent'?c.value+'%':'₹'+c.value)+' off · Min ₹'+c.min_cart+' · '+(c.enabled?'Active':'Disabled')+'<button class="mini" style="float:right" onclick="toggleCouponAdmin(\''+c.code+'\','+(c.enabled?'false':'true')+')">'+(c.enabled?'Disable':'Enable')+'</button></div>').join('')}
