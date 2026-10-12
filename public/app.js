@@ -66,7 +66,179 @@ function renderCart(){const el=document.getElementById('cartItems');if(!state.ca
 function qty(id,d){const i=state.cart.find(x=>Number(x.id)===Number(id));const p=state.products.find(x=>Number(x.id)===Number(id));if(!i||!p)return;i.qty=Math.max(1,Math.min(p.stock,i.qty+d));save();renderCart()}
 function removeCart(id){state.cart=state.cart.filter(x=>Number(x.id)!==Number(id));save();renderCart()}
 async function applyCoupon(){const code=document.getElementById('couponInput').value.trim();if(!code)return;try{state.coupon=await api('/api/coupons/validate',{method:'POST',body:JSON.stringify({code,subtotal:cartTotals().subtotal})});renderCart()}catch(e){alert(e.message)}}
-function openProduct(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p)return;document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML=`<button class="action" style="float:right" onclick="closeModal()">✕</button><div class="product-detail"><div>${p.image_url?`<img class="mainimg" src="${p.image_url}" alt="${p.name}">`:placeholder(p.category)}</div><div><div class="eyebrow">${p.category}</div><h2 style="font-size:38px">${p.name}</h2><p class="muted" style="margin-top:10px">${p.description||'An everyday selection from Luxurious Hub.'}</p><div class="prices" style="margin:16px 0"><span class="price" style="font-size:24px">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span></div><div class="panel"><strong>Specifications</strong><pre style="font-size:11px;white-space:pre-wrap;font-family:inherit">${JSON.stringify(p.specifications||{},null,2)}</pre></div><div class="cta"><button class="btn" onclick="addCart(${p.id});closeModal();openCart()">Add to Cart</button><button class="btn alt" onclick="buyNow(${p.id})">Buy Now</button></div></div></div>`}
+function openProduct(id){
+  const p=state.products.find(x=>Number(x.id)===Number(id));
+  if(!p)return;
+
+  const modal=document.getElementById('modal');
+  const panel=document.getElementById('modalContent')||
+    document.getElementById('modalCard');
+  if(!modal||!panel)return;
+
+  const esc=v=>String(v??'').replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+
+  let specs=p.specifications||{};
+  if(typeof specs==='string'){
+    try{specs=JSON.parse(specs||'{}')}catch{specs={}}
+  }
+
+  function flatten(obj,prefix=''){
+    if(Array.isArray(obj)){
+      return [[prefix||'Details',obj.map(v=>
+        typeof v==='object'?JSON.stringify(v):String(v)
+      ).join(', ')]];
+    }
+    if(!obj||typeof obj!=='object'){
+      return prefix?[[prefix,String(obj??'—')]]:[];
+    }
+    return Object.entries(obj).flatMap(([k,v])=>{
+      const label=prefix?prefix+' · '+k:k;
+      return v&&typeof v==='object'
+        ?flatten(v,label)
+        :[[label,String(v??'—')]];
+    });
+  }
+
+  const entries=flatten(specs);
+  const warrantyPattern=/warranty|guarantee|service period/i;
+  const makerPattern=/brand|manufacturer|model name|model number|country of origin|manufactured by|marketed by|importer|packer/i;
+
+  const highlights=entries.slice(0,4);
+
+  const specificationRows=entries.filter(([k])=>
+    !warrantyPattern.test(k)&&!makerPattern.test(k)
+  );
+  const warrantyRows=entries.filter(([k])=>warrantyPattern.test(k));
+  const makerRows=entries.filter(([k])=>makerPattern.test(k));
+
+  modal.classList.add('show');
+
+  panel.innerHTML=`
+    <button class="action" style="float:right"
+      onclick="closeModal()">✕</button>
+
+    <div class="product-detail">
+      <div>
+        ${p.image_url
+          ?`<img class="mainimg" src="${esc(p.image_url)}"
+              alt="${esc(p.name)}">`
+          :placeholder(p.category)}
+      </div>
+
+      <div>
+        <div class="eyebrow">${esc(p.category)}</div>
+        <h2 style="font-size:36px">${esc(p.name)}</h2>
+
+        <p class="muted" style="margin-top:10px">
+          ${esc(p.description||'An everyday selection from Luxurious Hub.')}
+        </p>
+
+        <div class="prices" style="margin:16px 0">
+          <span class="price" style="font-size:26px">${rupee(p.price)}</span>
+          <span class="mrp">${rupee(p.mrp)}</span>
+        </div>
+
+        <h3 style="font:600 17px Arial;padding:12px 0;
+          border-bottom:2px solid #222">Product Highlights</h3>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px">
+          ${highlights.length?highlights.map(([k,v])=>`
+            <div style="padding:11px 0;border-bottom:1px solid #e7e6df;font-size:12px;min-width:0">
+              <div style="color:#737970;margin-bottom:5px">${esc(k)}</div>
+              <strong style="font-weight:500;overflow-wrap:anywhere">${esc(v)}</strong>
+            </div>
+          `).join(''):'<p>No product highlights added yet.</p>'}
+        </div>
+
+        <h3 style="font:600 17px Arial;padding:12px 0;
+          margin-top:20px;border-bottom:2px solid #222">All Details</h3>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+          <button type="button" class="mini" data-spec-tab="Specifications">Specifications</button>
+          <button type="button" class="mini" data-spec-tab="Warranty">Warranty</button>
+          <button type="button" class="mini" data-spec-tab="Manufacturer Info">Manufacturer Info</button>
+        </div>
+
+        <div id="allDetailsContent"></div>
+
+        <section style="margin-top:24px;padding:16px;background:#f7f7f2">
+          <h3 style="font:600 17px Arial">Ratings and Reviews</h3>
+          <p style="font-size:14px;margin:12px 0">
+            ${Number(p.rating)>0?'★ '+Number(p.rating).toFixed(1)+' / 5':'Not rated yet'}
+          </p>
+          <p style="font-size:12px;color:#6f756f;line-height:1.6">
+            Customer reviews will appear here when available.
+          </p>
+        </section>
+
+        <div class="cta" style="margin-top:20px">
+          <button class="btn"
+            onclick="addCart(${Number(p.id)});closeModal();openCart()">
+            Add to Cart
+          </button>
+          <button class="btn alt"
+            onclick="buyNow(${Number(p.id)})">Buy Now</button>
+        </div>
+      </div>
+    </div>`;
+
+  let activeTab='Specifications';
+  let expanded=false;
+
+  function renderDetails(tab){
+    activeTab=tab;
+    const target=panel.querySelector('#allDetailsContent');
+    if(!target)return;
+
+    const rows=tab==='Warranty'?warrantyRows:
+      tab==='Manufacturer Info'?makerRows:specificationRows;
+
+    panel.querySelectorAll('[data-spec-tab]').forEach(btn=>{
+      const active=btn.dataset.specTab===tab;
+      btn.style.background=active?'#18392b':'#fff';
+      btn.style.color=active?'#fff':'#333';
+      btn.style.borderColor=active?'#18392b':'#dddeda';
+    });
+
+    const visible=expanded?rows:rows.slice(0,6);
+
+    target.innerHTML=visible.length?visible.map(([k,v])=>`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;
+        padding:11px 0;border-bottom:1px solid #e7e6df;font-size:12px">
+        <span style="color:#737970;overflow-wrap:anywhere">${esc(k)}</span>
+        <strong style="font-weight:500;overflow-wrap:anywhere">${esc(v)}</strong>
+      </div>
+    `).join(''):`<p style="font-size:12px;color:#737970;line-height:1.6">
+      ${tab==='Warranty'?'Warranty details have not been added yet.':
+        tab==='Manufacturer Info'?'Manufacturer details have not been added yet.':
+        'Specifications have not been added yet.'}
+    </p>`;
+
+    if(rows.length>6){
+      const more=document.createElement('button');
+      more.type='button';
+      more.className='mini';
+      more.style.marginTop='12px';
+      more.textContent=expanded?'See Less ↑':'See More ↓';
+      more.onclick=()=>{
+        expanded=!expanded;
+        renderDetails(activeTab);
+      };
+      target.appendChild(more);
+    }
+  }
+
+  panel.querySelectorAll('[data-spec-tab]').forEach(btn=>{
+    btn.onclick=()=>{
+      expanded=false;
+      renderDetails(btn.dataset.specTab);
+    };
+  });
+
+  renderDetails('Specifications');
+};closeModal();openCart()">Add to Cart</button><button class="btn alt" onclick="buyNow(${p.id})">Buy Now</button></div></div></div>`}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 function openCheckout(){if(!state.cart.length){alert('Your bag is empty');return}closeCart();const t=cartTotals();const modal=document.getElementById('modal');const card=document.getElementById('modalContent')||document.getElementById('modalCard');if(!modal||!card){alert('Checkout panel is unavailable');return}modal.classList.add('show');card.style.cssText='background:#fff;width:100%;max-width:960px;max-height:92vh;overflow:auto;padding:28px;box-shadow:0 16px 50px rgba(20,30,20,.18);position:relative';card.innerHTML='<button class="action" style="float:right;border:0;background:none;font-size:24px;cursor:pointer" onclick="closeModal()">✕</button><div class="eyebrow">Secure checkout</div><h2 style="font-size:38px;margin:0 0 20px">Delivery details</h2><form id="checkoutForm" style="display:grid;grid-template-columns:1fr;gap:14px"><input name="name" required placeholder="Full name" style="padding:13px;border:1px solid #dddeda"><input name="phone" required pattern="[0-9]{10}" inputmode="numeric" placeholder="10-digit mobile number" style="padding:13px;border:1px solid #dddeda"><input name="email" type="email" placeholder="Email (optional)" style="padding:13px;border:1px solid #dddeda;grid-column:1/-1"><input name="address" required placeholder="Street address" style="padding:13px;border:1px solid #dddeda;grid-column:1/-1"><input name="area" placeholder="Area / Apartment" style="padding:13px;border:1px solid #dddeda"><input name="landmark" placeholder="Landmark (optional)" style="padding:13px;border:1px solid #dddeda"><input name="city" required placeholder="City" style="padding:13px;border:1px solid #dddeda"><input name="state" required placeholder="State" style="padding:13px;border:1px solid #dddeda"><input name="pincode" required pattern="[0-9]{6}" inputmode="numeric" placeholder="Pincode" style="padding:13px;border:1px solid #dddeda"><div style="grid-column:1/-1;border:1px solid #dddeda;padding:14px;background:#f7f7f2">● Cash on Delivery — Pay when your order arrives</div><div style="grid-column:1/-1;background:#f7f7f2;padding:18px"><div style="display:flex;justify-content:space-between;margin:7px 0"><span>Subtotal</span><strong>'+rupee(t.subtotal)+'</strong></div><div style="display:flex;justify-content:space-between;margin:7px 0"><span>Discount</span><strong>'+(t.discount?'− '+rupee(t.discount):'—')+'</strong></div><div style="display:flex;justify-content:space-between;margin:7px 0"><span>Shipping</span><strong>'+(t.shipping?rupee(t.shipping):'Free')+'</strong></div><div style="display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:12px;margin-top:12px;font-size:18px"><strong>Total</strong><strong>'+rupee(t.total)+'</strong></div></div><button class="btn" type="submit" style="grid-column:1/-1">Place COD Order →</button></form>';document.getElementById('checkoutForm').onsubmit=submitOrder}
 async function startOnlinePayment(){const form=document.getElementById('checkoutForm');if(!form.reportValidity())return;try{if(!window.Razorpay){await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Razorpay checkout'));document.head.appendChild(s)})}const f=new FormData(form);const r=await api('/api/payment/create',{method:'POST',body:JSON.stringify({items:state.cart.map(i=>({productId:Number(i.id),qty:i.qty})),customer:Object.fromEntries(f.entries()),couponCode:state.coupon?.code||'',paymentMethod:'cod',idempotencyKey:crypto.randomUUID()})});const rz=new Razorpay({key:r.keyId,amount:Math.round(r.amount*100),currency:r.currency,name:'Luxurious Hub',description:'Luxurious Hub order '+r.orderId,order_id:r.razorpayOrderId,prefill:{name:f.get('name'),email:f.get('email'),contact:f.get('phone')},theme:{color:'#18392b'},handler:async response=>{const vr=await api('/api/payment/verify',{method:'POST',body:JSON.stringify({orderId:r.orderId,razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature})});state.cart=[];state.coupon='';save();closeModal();document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML=`<div style="text-align:center;padding:45px"><div style="font-size:40px">✓</div><div class="eyebrow">Payment successful</div><h2 style="font-size:38px">Order confirmed</h2><p>Your order ID is <strong>${vr.orderId}</strong></p><button id="payTrack" class="btn">Track your order →</button></div>`;document.getElementById('payTrack').onclick=()=>{closeModal();trackOrder(vr.orderId)};await load()}});rz.open()}catch(e){alert(e.message)}}
