@@ -2,11 +2,12 @@ const BUILD_VERSION='2026-09-30-1935';
 const state={products:[],cart:JSON.parse(localStorage.getItem('lh_cart')||'[]'),wishlist:JSON.parse(localStorage.getItem('lh_wish')||'[]'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
 const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech'};
 const rupee=n=>'₹'+Number(n).toLocaleString('en-IN');
+function productImage(p,size='large'){return p?.images?.[size]||p?.image_variants?.[size]?.url||p?.image_url||'';}
 async function api(path,opt={}){const r=await fetch(path,{headers:{'content-type':'application/json',...(opt.headers||{})},credentials:'same-origin',...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
 function save(){localStorage.setItem('lh_cart',JSON.stringify(state.cart));localStorage.setItem('lh_wish',JSON.stringify(state.wishlist));updateCounts()}
 function updateCounts(){const c=state.cart.reduce((s,x)=>s+Number(x.qty||0),0);const w=state.wishlist.length;const b=document.getElementById('bagCount')||document.getElementById('cartBadge');const wb=document.getElementById('wishCount')||document.getElementById('wishBadge');const mb=document.getElementById('mobileBagCount');if(b)b.textContent=c;if(wb)wb.textContent=w;if(mb)mb.textContent=c}function updateBadges(){updateCounts()}
 function placeholder(cat){return `<div class="placeholder ${ph[cat]||'ph-tech'}">${cat}</div>`}
-function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*100));return `<article class="product" style="cursor:pointer" onclick="if(!event.target.closest('button'))openProduct(${Number(p.id)})"><div class="product-media">${p.image_url?`<img src="${p.image_url}" alt="${p.name}" loading="lazy">`:placeholder(p.category)}<span class="badge">${p.tag||'New'}</span><button class="heart" aria-label="Add to wishlist" onclick="event.stopPropagation();toggleWish(${p.id})">${state.wishlist.includes(Number(p.id))?'♥':'♡'}</button></div><div class="meta"><div class="muted">${p.category}</div><div class="name">${p.name}</div><div class="muted">${p.rating?p.rating.toFixed(1)+' ★':'New'} · ${p.stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span><span class="off">${off}% off</span></div><div class="mini-actions"><button class="mini" ${p.stock<1?'disabled':''} onclick="addCart(${p.id})">＋ Add to Cart</button><button class="mini" ${p.stock<1?'disabled':''} onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
+function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*100));return `<article class="product"><div class="product-media">${productImage(p,'listing')?`<img src="${productImage(p,'listing')}" alt="${p.name}" loading="lazy">`:placeholder(p.category)}<span class="badge">${p.tag||'New'}</span><button class="heart" onclick="toggleWish(${p.id})">${state.wishlist.includes(Number(p.id))?'♥':'♡'}</button></div><div class="meta"><div class="muted">${p.category}</div><div class="name">${p.name}</div><div class="muted">${p.rating?p.rating.toFixed(1)+' ★':'New'} · ${p.stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span><span class="off">${off}% off</span></div><div class="mini-actions"><button class="mini" ${p.stock<1?'disabled':''} onclick="addCart(${p.id})">＋ Add to Cart</button><button class="mini" ${p.stock<1?'disabled':''} onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
 function render(list,target,limit=8){document.getElementById(target).innerHTML=list.filter(p=>p.active).slice(0,limit).map(card).join('')}
 function renderCategoryWithMore(category,target){
   const items=state.products.filter(p=>p.category===category&&p.active);
@@ -62,7 +63,7 @@ function buyNow(id){state.cart=[{id:Number(id),qty:1}];save();openCheckout()}
 function openCart(){document.getElementById('cartOverlay').classList.add('show');renderCart()}
 function closeCart(){document.getElementById('cartOverlay').classList.remove('show')}
 function cartTotals(){let subtotal=0;for(const i of state.cart){const p=state.products.find(x=>Number(x.id)===Number(i.id));if(p)subtotal+=Number(p.price)*i.qty}let discount=0;if(state.coupon)discount=state.coupon.type==='percent'?Math.min(subtotal*state.coupon.value/100,state.coupon.max_discount||subtotal):Math.min(state.coupon.value,state.coupon.max_discount||state.coupon.value);const shipping=subtotal>=499||subtotal===0?0:49;return{subtotal,discount,shipping,total:subtotal-discount+shipping}}
-function renderCart(){const el=document.getElementById('cartItems');if(!state.cart.length){el.innerHTML='<div style="padding:50px 0;text-align:center;color:#777">Your bag is empty.</div>';document.getElementById('cartSummary').innerHTML='';return}el.innerHTML=state.cart.map(i=>{const p=state.products.find(x=>Number(x.id)===Number(i.id));if(!p)return '';return `<div class="cart-item"><div>${p.image_url?`<img src="${p.image_url}" alt="${p.name}">`:placeholder(p.category)}</div><div><div class="muted">${p.category}</div><div class="name">${p.name}</div><strong>${rupee(p.price)}</strong><div class="qty"><button onclick="qty(${p.id},-1)">−</button><span>${i.qty}</span><button onclick="qty(${p.id},1)">＋</button></div></div><button class="action" onclick="removeCart(${p.id})">✕</button></div>`}).join('');const t=cartTotals();document.getElementById('cartSummary').innerHTML=`<div class="summary"><div class="cart-coupon"><input id="couponInput" placeholder="Coupon code"><button onclick="applyCoupon()">Apply</button></div>${state.coupon?`<div class="row"><span>Coupon ${state.coupon.code}</span><strong>− ${rupee(t.discount)}</strong></div>`:''}<div class="row"><span>Subtotal</span><strong>${rupee(t.subtotal)}</strong></div><div class="row"><span>Shipping</span><span>${t.shipping?rupee(t.shipping):'Free'}</span></div><div class="row" style="font-size:17px;border-top:1px solid #ddd;padding-top:10px"><strong>Total</strong><strong>${rupee(t.total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Continue to checkout →</button></div>`}
+function renderCart(){const el=document.getElementById('cartItems');if(!state.cart.length){el.innerHTML='<div style="padding:50px 0;text-align:center;color:#777">Your bag is empty.</div>';document.getElementById('cartSummary').innerHTML='';return}el.innerHTML=state.cart.map(i=>{const p=state.products.find(x=>Number(x.id)===Number(i.id));if(!p)return '';return `<div class="cart-item"><div>${productImage(p,'small')?`<img src="${productImage(p,'small')}" alt="${p.name}">`:placeholder(p.category)}</div><div><div class="muted">${p.category}</div><div class="name">${p.name}</div><strong>${rupee(p.price)}</strong><div class="qty"><button onclick="qty(${p.id},-1)">−</button><span>${i.qty}</span><button onclick="qty(${p.id},1)">＋</button></div></div><button class="action" onclick="removeCart(${p.id})">✕</button></div>`}).join('');const t=cartTotals();document.getElementById('cartSummary').innerHTML=`<div class="summary"><div class="cart-coupon"><input id="couponInput" placeholder="Coupon code"><button onclick="applyCoupon()">Apply</button></div>${state.coupon?`<div class="row"><span>Coupon ${state.coupon.code}</span><strong>− ${rupee(t.discount)}</strong></div>`:''}<div class="row"><span>Subtotal</span><strong>${rupee(t.subtotal)}</strong></div><div class="row"><span>Shipping</span><span>${t.shipping?rupee(t.shipping):'Free'}</span></div><div class="row" style="font-size:17px;border-top:1px solid #ddd;padding-top:10px"><strong>Total</strong><strong>${rupee(t.total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Continue to checkout →</button></div>`}
 function qty(id,d){const i=state.cart.find(x=>Number(x.id)===Number(id));const p=state.products.find(x=>Number(x.id)===Number(id));if(!i||!p)return;i.qty=Math.max(1,Math.min(p.stock,i.qty+d));save();renderCart()}
 function removeCart(id){state.cart=state.cart.filter(x=>Number(x.id)!==Number(id));save();renderCart()}
 async function applyCoupon(){const code=document.getElementById('couponInput').value.trim();if(!code)return;try{state.coupon=await api('/api/coupons/validate',{method:'POST',body:JSON.stringify({code,subtotal:cartTotals().subtotal})});renderCart()}catch(e){alert(e.message)}}
@@ -122,7 +123,7 @@ function openProduct(id){
     <div class="product-detail">
       <div>
         ${p.image_url
-          ?`<img class="mainimg" src="${esc(p.image_url)}"
+          ?`<img class="mainimg" src="${esc(productImage(p,'large'))}"
               alt="${esc(p.name)}">`
           :placeholder(p.category)}
       </div>
@@ -253,7 +254,7 @@ function adminHome(){document.getElementById('adminRoot').innerHTML='<button cla
 async function adminProducts(){const r=await api('/api/admin/products');csrf=r.csrf;document.getElementById('adminPanel').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><strong>Products</strong><button class="btn" onclick="adminEditProduct()">+ Add Product</button></div><table class="admin-table"><thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Image</th><th></th></tr></thead><tbody>'+r.products.map(p=>'<tr><td>'+p.name+'<br><span class="muted">'+p.category+'</span></td><td>'+rupee(p.price)+'</td><td>'+p.stock+'</td><td>'+ (p.image_url?'<span class="status">Uploaded</span>':'<span class="muted">No image</span>') +'</td><td><button class="mini" onclick="adminEditProduct('+p.id+')">Edit</button></td></tr>').join('')+'</tbody></table>'}
 async function adminEditProduct(id) {
   const p = id
-    ? (await api('/api/products/' + id)).product
+    ? (await api('/api/admin/products/' + id)).product
     : {
         name: '',
         category: 'Watches',
@@ -396,17 +397,25 @@ async function adminEditProduct(id) {
       </label>
 
       <div class="full panel">
-        <strong>11. Product Image</strong>
-        <p class="muted">
-          Choose a clear product photo (PNG, JPG or WebP, up to 6 MB).
-        </p>
-        <input id="pi" type="file" accept="image/*"
-          style="display:block;width:100%;margin-top:8px">
-        <div id="pip" class="muted" style="margin-top:8px">
-          ${p.image_url
-            ? 'Current image is uploaded. Select a file only to replace it.'
-            : 'No image uploaded yet.'}
+        <strong>11. Product Image Sizes</strong>
+        <p class="muted" style="margin:8px 0 14px">Har size ki image alag upload kar sakte ho. File PNG/JPG/WebP ho aur 6 MB se chhoti ho. URL optional hai; URL https:// se shuru hona chahiye.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px">
+          <label style="${labelStyle}">Image Type<select id="pImageType" style="${inputStyle}"><option value="product">Product Image</option><option value="tech">Tech. Image</option><option value="gallery">Gallery Image</option><option value="lifestyle">Lifestyle Image</option></select></label>
+          <label style="${labelStyle}">Title for Image<input id="pImageTitle" style="${inputStyle}" value="${safe(p.name)}" placeholder="Image title"></label>
+          <label style="${labelStyle}">Option Code (OP-Code)<input id="pImageOption" style="${inputStyle}" value="0"></label>
+          <label style="${labelStyle}">Sort Order<input id="pImageSort" type="number" style="${inputStyle}" value="0"></label>
+          <label style="${labelStyle}">Image Style<select id="pImageStyle" style="${inputStyle}"><option value="none">None</option><option value="studio">Studio Image</option><option value="lifestyle">Lifestyle Image</option></select></label>
+          <label style="${labelStyle};display:flex;align-items:center;gap:8px"><input id="pImageSlider" type="checkbox" style="width:auto"> Show image in slider</label>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          ${[
+            {key:'large',label:'LARGE',hint:'Original / high resolution'},
+            {key:'medium',label:'MEDIUM',hint:'600 × 600'},
+            {key:'listing',label:'LISTING',hint:'360 × 360'},
+            {key:'small',label:'SMALL',hint:'120 × 120'}
+          ].map(slot=>{const v=p.image_variants?.[slot.key];const current=v?.url||(slot.key==='large'?p.image_url:'');return `<div style="border:1px solid #dddeda;border-radius:4px;padding:12px;background:#fff;min-width:0"><div style="background:#f3f3ef;padding:7px;text-align:center;font-weight:700;font-size:12px">${slot.label}</div><p class="muted" style="margin:8px 0">${slot.hint}</p>${current?`<img src="${safe(current)}" alt="${slot.label} current image" style="display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 8px;border:1px solid #eee">`:'<div style="height:76px;display:grid;place-items:center;color:#8a8f89;font-size:11px">No image saved</div>'}<label style="display:block;font-size:12px">Choose image<input id="pi_${slot.key}" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:7px"></label><label style="display:block;font-size:12px;margin-top:10px">Or enter URL<input id="piUrl_${slot.key}" type="url" placeholder="https://..." style="${inputStyle}"></label></div>`}).join('')}
+        </div>
+        <p class="muted" style="margin-top:12px">Existing main image rahegi jab tak aap Large image replace nahi karte. Medium/Listing/Small na dene par website available larger image ko fallback ke taur par use karegi.</p>
       </div>
 
       <div class="full">
@@ -418,6 +427,15 @@ async function adminEditProduct(id) {
   `;
 
   document.getElementById('pc').value = p.category;
+  if (p.image_variants?.large) {
+    const v = p.image_variants.large;
+    document.getElementById('pImageType').value = v.image_type || 'product';
+    document.getElementById('pImageTitle').value = v.title || p.name;
+    document.getElementById('pImageOption').value = v.option_code || '0';
+    document.getElementById('pImageSort').value = String(v.sort_order ?? 0);
+    document.getElementById('pImageSlider').checked = Boolean(v.show_in_slider);
+    document.getElementById('pImageStyle').value = v.image_style || 'none';
+  }
 
   document.getElementById('pform').onsubmit = async e => {
     e.preventDefault();
@@ -464,25 +482,29 @@ async function adminEditProduct(id) {
         productId = result.id;
       }
 
-      const file = document.getElementById('pi').files?.[0];
-
-      if (file) {
+      for (const sizeType of ['large','medium','listing','small']) {
+        const file = document.getElementById('pi_' + sizeType).files?.[0];
+        const externalUrl = document.getElementById('piUrl_' + sizeType).value.trim();
+        if (!file && !externalUrl) continue;
         const fd = new FormData();
-        fd.append('file', file);
-
-        const response = await fetch(
-          '/api/admin/products/' + productId + '/image',
-          {
-            method: 'POST',
-            headers: {'X-CSRF-Token': csrf},
-            credentials: 'same-origin',
-            body: fd
-          }
-        );
-
+        if (file) fd.append('file', file);
+        fd.append('sizeType', sizeType);
+        fd.append('imageType', document.getElementById('pImageType').value);
+        fd.append('title', document.getElementById('pImageTitle').value || document.getElementById('pn').value);
+        fd.append('optionCode', document.getElementById('pImageOption').value || '0');
+        fd.append('sortOrder', document.getElementById('pImageSort').value || '0');
+        fd.append('showInSlider', document.getElementById('pImageSlider').checked ? '1' : '0');
+        fd.append('imageStyle', document.getElementById('pImageStyle').value);
+        if (externalUrl) fd.append('externalUrl', externalUrl);
+        const response = await fetch('/api/admin/products/' + productId + '/image', {
+          method: 'POST',
+          headers: {'X-CSRF-Token': csrf},
+          credentials: 'same-origin',
+          body: fd
+        });
         if (!response.ok) {
           const error = await response.json().catch(() => ({}));
-          throw new Error(error.error || 'Image upload failed');
+          throw new Error(error.error || 'Image upload failed (' + sizeType + ')');
         }
       }
 
