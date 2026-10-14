@@ -558,4 +558,40 @@ document.addEventListener('click',e=>{
     searchResults.classList.remove('show');
   }
 });
+
+function openProductImageZoom(src,alt='Product image'){
+  const old=document.getElementById('productImageZoom');
+  if(old)old.remove();
+  const overlay=document.createElement('div');
+  overlay.id='productImageZoom';
+  overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-label','Enlarged product image');
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:rgba(255,255,255,.98);padding:18px';
+  const image=document.createElement('img');
+  image.src=src;image.alt=alt;
+  image.style.cssText='display:block;max-width:96vw;max-height:94vh;width:auto;height:auto;object-fit:contain;cursor:zoom-out';
+  const close=document.createElement('button');
+  close.type='button';close.textContent='×';close.setAttribute('aria-label','Close enlarged image');
+  close.style.cssText='position:fixed;top:10px;left:12px;z-index:1;border:0;background:#fff;font-size:30px;line-height:1;padding:5px 12px;cursor:pointer';
+  const cleanup=()=>{overlay.remove();document.removeEventListener('keydown',onKey)};
+  const onKey=e=>{if(e.key==='Escape')cleanup()};
+  close.addEventListener('click',cleanup);
+  overlay.addEventListener('click',e=>{if(e.target===overlay||e.target===image)cleanup()});
+  overlay.append(close,image);document.body.appendChild(overlay);
+  document.addEventListener('keydown',onKey);
+}
+document.addEventListener('click',e=>{
+  if(!(e.target instanceof Element))return;
+  const detailImage=e.target.closest('#modalContent .product-detail img');
+  if(detailImage){e.preventDefault();openProductImageZoom(detailImage.currentSrc||detailImage.src,detailImage.alt);return;}
+  const cardImage=e.target.closest('.product-media img');
+  const card=cardImage||e.target.closest('article.product');
+  if(!card||e.target.closest('button,a,input,select,textarea'))return;
+  const article=card.matches('article.product')?card:card.closest('article.product');
+  if(!article)return;
+  const name=article.querySelector('.name')?.textContent?.trim();
+  const product=state.products.find(p=>String(p.name).trim()===name);
+  if(product)openProduct(product.id);
+});
+
 load().catch(err=>{document.getElementById('productGrid').innerHTML='<div class="panel">Store is starting up. Please refresh in a moment.</div>'});updateCounts();
