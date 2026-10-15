@@ -83,6 +83,27 @@ export default {async fetch(request,env){const url=new URL(request.url);try{
     if(request.method==='GET'&&url.pathname==='/api/admin/products')return json({products:await listProducts(env,url,true),csrf:auth.session.csrf_token});
     if(request.method==='POST'&&url.pathname==='/api/admin/products'){const d=await bodyJSON(request);const slug=slugify(d?.slug||d?.name);const r=await env.DB.prepare('INSERT INTO products(slug,name,category,price,mrp,stock,tag,rating,description,specifications,active,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(slug,text(d?.name),text(d?.category),Number(d?.price||0),Number(d?.mrp||0),Number(d?.stock||0),text(d?.tag||'New'),Number(d?.rating||0),text(d?.description||''),JSON.stringify(d?.specifications||{}),d?.active===false?0:1,now(),now()).run();return json({id:r.meta?.last_row_id,slug});}
     if(request.method==='PUT'&&url.pathname.startsWith('/api/admin/products/')){const id=Number(url.pathname.split('/').pop());const d=await bodyJSON(request);const p=await env.DB.prepare('SELECT * FROM products WHERE id=?').bind(id).first();if(!p)return bad('Product not found',404);const slug=slugify(d?.slug||d?.name||p.name);await env.DB.prepare('UPDATE products SET slug=?,name=?,category=?,price=?,mrp=?,stock=?,tag=?,rating=?,description=?,specifications=?,active=?,updated_at=? WHERE id=?').bind(slug,text(d?.name??p.name),text(d?.category??p.category),Number(d?.price??p.price),Number(d?.mrp??p.mrp),Number(d?.stock??p.stock),text(d?.tag??p.tag),Number(d?.rating??p.rating),text(d?.description??p.description),JSON.stringify(d?.specifications??JSON.parse(p.specifications||'{}')),d?.active===false?0:1,now(),id).run();return json({ok:true});}
+    if(request.method==='DELETE'&&/^\/api\/admin\/products\/\d+\/image-variant\/(large|medium|listing|small)$/.test(url.pathname)){
+      const parts=url.pathname.split('/');const id=Number(parts[4]);const sizeType=parts[6];
+      const product=await env.DB.prepare('SELECT image_key FROM products WHERE id=?').bind(id).first();
+      if(!product)return bad('Product not found',404);
+      const variant=await env.DB.prepare('SELECT object_key FROM product_image_variants WHERE product_id=? AND size_type=?').bind(id,sizeType).first();
+      const keys=new Set();if(variant?.object_key)keys.add(variant.object_key);
+      if(sizeType==='large'&&product.image_key)keys.add(product.image_key);
+      await env.DB.prepare('DELETE FROM product_image_variants WHERE product_id=? AND size_type=?').bind(id,sizeType).run();
+      for(const key of keys)await env.DB.prepare('DELETE FROM product_images WHERE product_id=? AND object_key=?').bind(id,key).run();
+      if(sizeType==='large'){
+        const next=await env.DB.prepare('SELECT object_key FROM product_images WHERE product_id=? ORDER BY sort_order,id LIMIT 1').bind(id).first();
+        await env.DB.prepare('UPDATE products SET image_key=?,updated_at=? WHERE id=?').bind(next?.object_key||null,now(),id).run();
+      }
+      for(const key of keys){
+        const variantRefs=await env.DB.prepare('SELECT COUNT(*) AS c FROM product_image_variants WHERE object_key=?').bind(key).first();
+        const productRefs=await env.DB.prepare('SELECT COUNT(*) AS c FROM product_images WHERE object_key=?').bind(key).first();
+        const orderRefs=await env.DB.prepare('SELECT COUNT(*) AS c FROM order_items WHERE image_key=?').bind(key).first();
+        if(!Number(variantRefs?.c||0)&&!Number(productRefs?.c||0)&&!Number(orderRefs?.c||0))await env.IMAGES.delete(key);
+      }
+      return json({ok:true,productId:id,sizeType});
+    }
     if(request.method==='POST'&&/^\/api\/admin\/products\/\d+\/image$/.test(url.pathname)){
       const id=Number(url.pathname.split('/')[4]);const product=await env.DB.prepare('SELECT * FROM products WHERE id=?').bind(id).first();if(!product)return bad('Product not found',404);
       const form=await request.formData();const file=form.get('file');const hasFile=file instanceof File&&file.size>0;
