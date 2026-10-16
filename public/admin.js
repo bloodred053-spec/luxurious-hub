@@ -23,7 +23,8 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
       <label class="full" style="${labelStyle}">Specifications JSON<textarea id="spec" class="full" rows="5" style="${inputStyle};font-family:monospace" placeholder='{"Brand":"Titan","Display Type":"Analog"}'>${safe(JSON.stringify(p.specifications||{},null,2))}</textarea></label>
       <div class="full panel" style="padding:14px">
         <h3 style="margin-bottom:7px">Product Image Sizes</h3>
-        <p class="muted" style="line-height:1.6;margin:0 0 14px">Har size ke liye PNG/JPG/WebP file (max 6 MB) Choose image se upload karo, ya poora public HTTPS URL paste karo. Sirf filename jaise L-2026-...webp valid URL nahi hai. Image software mein filename par click karke full URL copy karo, ya file computer par download karke Choose image use karo. Existing image tab tak rahegi jab tak replace ya remove nahi karte.</p>
+        <p class="muted" style="line-height:1.6;margin:0 0 14px">Shortcut: sirf LARGE image upload karo. Admin automatically 600 × 600 MEDIUM, 360 × 360 LISTING aur 120 × 120 SMALL versions banayega aur preview dikhayega. Product poora visible rahega—crop ya stretch nahi hoga. Kisi size ki apni image/HTTPS URL dena ho toh woh auto version ko override karegi. Existing saved images Save dabane tak change nahi hoti.</p>
+        <div id="autoSizeStatus" class="notice-box" style="margin:0 0 14px" aria-live="polite">Choose a LARGE image to automatically create the other 3 sizes.</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:14px">
           <label style="${labelStyle}">Image Type<select id="pImageType" style="${inputStyle}"><option value="product">Product Image</option><option value="tech">Tech. Image</option><option value="gallery">Gallery Image</option><option value="lifestyle">Lifestyle Image</option></select></label>
           <label style="${labelStyle}">Title for Image<input id="pImageTitle" style="${inputStyle}" value="${safe(p.name)}" placeholder="Image title"></label>
@@ -33,12 +34,60 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
           <label style="${labelStyle};display:flex;align-items:center;gap:7px"><input id="pImageSlider" type="checkbox" style="width:auto"> Show image in slider</label>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-          ${slots.map(slot=>{const v=p.image_variants?.[slot.key];const current=v?.url||(slot.key==='large'?p.image_url:'');return `<div style="border:1px solid #dddeda;border-radius:4px;padding:12px;background:#fff;min-width:0"><div style="background:#f3f3ef;padding:7px;text-align:center;font-weight:700;font-size:12px">${slot.label}</div><p class="muted" style="margin:8px 0">${slot.hint}</p>${current?`<img src="${safe(current)}" alt="${slot.label} current image" style="display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 8px;border:1px solid #eee">${id?`<button type="button" class="mini" style="display:block;width:100%;margin:8px 0;color:#9e3f35" onclick="removeImageVariant(${Number(id)},'${slot.key}')">Remove ${slot.label.toLowerCase()} image</button>`:''}`:'<div style="height:76px;display:grid;place-items:center;color:#8a8f89;font-size:11px">No image saved</div>'}<label style="display:block;font-size:12px">Choose image<input id="pi_${slot.key}" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:7px"></label><label style="display:block;font-size:12px;margin-top:10px">Or enter full HTTPS URL<input id="piUrl_${slot.key}" type="url" placeholder="https://example.com/image.webp" style="${inputStyle}"></label></div>`}).join('')}
+          ${slots.map(slot=>{const v=p.image_variants?.[slot.key];const current=v?.url||(slot.key==='large'?p.image_url:'');return `<div style="border:1px solid #dddeda;border-radius:4px;padding:12px;background:#fff;min-width:0"><div style="background:#f3f3ef;padding:7px;text-align:center;font-weight:700;font-size:12px">${slot.label}</div><p class="muted" style="margin:8px 0">${slot.hint}</p>${current?`<img src="${safe(current)}" alt="${slot.label} current image" style="display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 8px;border:1px solid #eee">${id?`<button type="button" class="mini" style="display:block;width:100%;margin:8px 0;color:#9e3f35" onclick="removeImageVariant(${Number(id)},'${slot.key}')">Remove ${slot.label.toLowerCase()} image</button>`:''}`:'<div style="height:76px;display:grid;place-items:center;color:#8a8f89;font-size:11px">No image saved</div>'}<div id="autoPreview_${slot.key}" style="margin:8px 0;text-align:center"></div><label style="display:block;font-size:12px">Choose image<input id="pi_${slot.key}" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:7px"></label><label style="display:block;font-size:12px;margin-top:10px">Or enter full HTTPS URL<input id="piUrl_${slot.key}" type="url" placeholder="https://example.com/image.webp" style="${inputStyle}"></label></div>`}).join('')}
         </div>
       </div>
       <button class="btn full" type="submit">Save Product and Images</button>
     </form>`;
   document.getElementById('cat').value=p.category||'Watches';
+  // Keep generated files and object-URL previews local to this product editor.
+  const generatedImageFiles=Object.create(null);
+  const generatedImageUrls=Object.create(null);
+  let pendingResize=Promise.resolve();
+  let resizeError='';
+  function showAutoPreview(sizeType,blobOrFile,label){
+    const target=document.getElementById('autoPreview_'+sizeType);
+    if(!target)return;
+    if(generatedImageUrls[sizeType])URL.revokeObjectURL(generatedImageUrls[sizeType]);
+    const previewUrl=URL.createObjectURL(blobOrFile);
+    generatedImageUrls[sizeType]=previewUrl;
+    target.innerHTML=`<img src="${previewUrl}" alt="${label}" style="display:block;width:100%;max-width:150px;height:105px;object-fit:contain;background:#fff;margin:0 auto 5px;border:1px solid #e7e6df"><div class="muted">${label}</div>`;
+  }
+  async function makeSquareVariant(bitmap,size,baseName){
+    const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+    const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Image canvas is not available in this browser.');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+    const scale=Math.min(size/bitmap.width,size/bitmap.height);
+    const width=Math.max(1,Math.round(bitmap.width*scale));
+    const height=Math.max(1,Math.round(bitmap.height*scale));
+    ctx.drawImage(bitmap,(size-width)/2,(size-height)/2,width,height);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not make the resized image.')),'image/webp',0.88));
+    const mime=blob.type||'image/png';const ext=mime==='image/webp'?'webp':mime==='image/jpeg'?'jpg':'png';
+    return new File([blob],`${baseName}-${size}.${ext}`,{type:mime,lastModified:Date.now()});
+  }
+  async function generateImageSizes(file){
+    resizeError='';for(const key of Object.keys(generatedImageFiles))delete generatedImageFiles[key];
+    if(!file)return;
+    if(!file.type.startsWith('image/'))throw new Error('Please choose a valid image file.');
+    if(file.size>6*1024*1024)throw new Error('Large image must be 6 MB or smaller.');
+    showAutoPreview('large',file,'Selected original · Large');
+    document.getElementById('autoSizeStatus').textContent='Creating MEDIUM, LISTING and SMALL previews…';
+    const bitmap=await createImageBitmap(file);
+    try{
+      const baseName=(file.name.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_-]+/g,'-')||'product-image');
+      for(const item of [{key:'medium',size:600},{key:'listing',size:360},{key:'small',size:120}]){
+        const out=await makeSquareVariant(bitmap,item.size,baseName);
+        generatedImageFiles[item.key]=out;
+        showAutoPreview(item.key,out,`Auto-created · ${item.size} × ${item.size}`);
+      }
+      document.getElementById('autoSizeStatus').textContent='Ready! 3 sizes created automatically. Save Product and Images to upload all 4 versions.';
+    }finally{bitmap.close?.()}
+  }
+  document.getElementById('pi_large').addEventListener('change',e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    const submit=document.querySelector('#pf button[type=submit]');if(submit){submit.disabled=true;submit.textContent='Generating image sizes…'}
+    pendingResize=generateImageSizes(file).catch(err=>{resizeError=err.message||'Could not create image sizes.';document.getElementById('autoSizeStatus').textContent=resizeError;alert(resizeError)}).finally(()=>{if(submit){submit.disabled=false;submit.textContent='Save Product and Images'}});
+  });
   const large=p.image_variants?.large;
   if(large){
     document.getElementById('pImageType').value=large.image_type||'product';
@@ -54,13 +103,17 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
     try{specs=JSON.parse(document.getElementById('spec').value||'{}')}catch{alert('Specifications must be valid JSON.');return}
     const payload={slug:document.getElementById('slug').value,name:document.getElementById('n').value,category:document.getElementById('cat').value,price:Number(document.getElementById('price').value),mrp:Number(document.getElementById('mrp').value),stock:Number(document.getElementById('stock').value),tag:document.getElementById('tag').value,rating:Number(document.getElementById('rating').value||0),description:document.getElementById('desc').value,specifications:specs,active:true};
     try{
+      await pendingResize;
+      if(resizeError)throw new Error(resizeError);
       let productId=id;
       if(id){await api('/api/admin/products/'+id,{method:'PUT',headers:{'X-CSRF-Token':csrf},body:JSON.stringify(payload)})}
       else{const created=await api('/api/admin/products',{method:'POST',headers:{'X-CSRF-Token':csrf},body:JSON.stringify(payload)});productId=created.id}
       let uploaded=0;
       for(const sizeType of ['large','medium','listing','small']){
-        const file=document.getElementById('pi_'+sizeType).files?.[0];
+        const manuallySelectedFile=document.getElementById('pi_'+sizeType).files?.[0]||null;
         const externalUrl=document.getElementById('piUrl_'+sizeType).value.trim();
+        // Priority: a manually selected file, then a typed HTTPS URL, then an auto-generated size.
+        const file=manuallySelectedFile||(!externalUrl?generatedImageFiles[sizeType]||null:null);
         if(!file&&!externalUrl)continue;
         const fd=new FormData();
         if(file)fd.append('file',file);
@@ -71,7 +124,7 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
         fd.append('sortOrder',document.getElementById('pImageSort').value||'0');
         fd.append('showInSlider',document.getElementById('pImageSlider').checked?'1':'0');
         fd.append('imageStyle',document.getElementById('pImageStyle').value);
-        if(externalUrl)fd.append('externalUrl',externalUrl);
+        if(externalUrl&&!file)fd.append('externalUrl',externalUrl);
         const response=await fetch('/api/admin/products/'+productId+'/image',{method:'POST',headers:{'X-CSRF-Token':csrf},credentials:'same-origin',body:fd});
         if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.error||('Image upload failed ('+sizeType+')'))}
         uploaded++;
