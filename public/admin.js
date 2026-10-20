@@ -10,17 +10,46 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
   panel.innerHTML=`
     <button class="mini" type="button" onclick="products()">← Products</button>
     <h2 style="margin:16px 0">${id?'Edit':'Add'} product</h2>
-    <form id="pf" class="formgrid" style="gap:14px">
-      <input id="n" class="full" required placeholder="Product name" value="${safe(p.name)}">
-      <input id="slug" placeholder="Slug" value="${safe(p.slug||'')}">
-      <select id="cat"><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobile Accessories</option></select>
-      <input id="price" type="number" min="0" required value="${Number(p.price||0)}" placeholder="Selling price">
-      <input id="mrp" type="number" min="0" required value="${Number(p.mrp||0)}" placeholder="MRP">
-      <input id="stock" type="number" min="0" required value="${Number(p.stock||0)}" placeholder="Stock">
-      <input id="tag" value="${safe(p.tag||'New')}" placeholder="Badge">
-      <input id="rating" type="number" min="0" max="5" step="0.1" value="${Number(p.rating||0)}" placeholder="Rating (0–5)">
-      <textarea id="desc" class="full" rows="4" placeholder="Description">${safe(p.description||'')}</textarea>
-      <label class="full" style="${labelStyle}">Specifications JSON<textarea id="spec" class="full" rows="5" style="${inputStyle};font-family:monospace" placeholder='{"Brand":"Titan","Display Type":"Analog"}'>${safe(JSON.stringify(p.specifications||{},null,2))}</textarea></label>
+    <form id="pf" class="formgrid" style="gap:16px">
+      <label class="full" style="${labelStyle}">1. Product Name
+        <small style="display:block;font-weight:400;color:#737970;margin-top:4px">The name customers will see on the website.</small>
+        <input id="n" required style="${inputStyle}" placeholder="e.g. Casio Analog Watch" value="${safe(p.name)}">
+      </label>
+      <div class="full" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+        <label style="${labelStyle}">2. URL Slug <small style="font-weight:400;color:#737970">(Optional)</small>
+          <input id="slug" style="${inputStyle}" placeholder="e.g. casio-analog-watch" value="${safe(p.slug||'')}">
+        </label>
+        <label style="${labelStyle}">3. Product Category
+          <select id="cat" style="${inputStyle}"><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobile Accessories</option></select>
+        </label>
+        <label style="${labelStyle}">4. Selling Price (₹)
+          <input id="price" type="number" min="0" required style="${inputStyle}" value="${Number(p.price||0)}" placeholder="e.g. 24999">
+        </label>
+        <label style="${labelStyle}">5. MRP / Original Price (₹)
+          <input id="mrp" type="number" min="0" required style="${inputStyle}" value="${Number(p.mrp||0)}" placeholder="e.g. 32999">
+        </label>
+        <label style="${labelStyle}">6. Available Stock / Quantity
+          <input id="stock" type="number" min="0" required style="${inputStyle}" value="${Number(p.stock||0)}" placeholder="Number of units">
+        </label>
+        <label style="${labelStyle}">7. Product Badge
+          <input id="tag" style="${inputStyle}" value="${safe(p.tag||'New')}" placeholder="New / Featured / Bestseller">
+        </label>
+        <label style="${labelStyle}">8. Product Rating (0–5)
+          <input id="rating" type="number" min="0" max="5" step="0.1" style="${inputStyle}" value="${Number(p.rating||0)}" placeholder="e.g. 4.5">
+        </label>
+      </div>
+      <label class="full" style="${labelStyle}">9. Product Description
+        <small style="display:block;font-weight:400;color:#737970;margin-top:4px">A short, clear description of the product.</small>
+        <textarea id="desc" rows="4" style="${inputStyle}" placeholder="Write a few lines about the product...">${safe(p.description||'')}</textarea>
+      </label>
+      <div class="full panel" style="padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><h3 style="margin:0 0 5px">10. Product Specifications</h3><p class="muted" style="margin:0;line-height:1.5">Fill in normal fields below—no JSON code required. Blank rows will not be saved.</p></div>
+          <button id="addSpecRow" class="mini" type="button" style="flex:0 0 auto">+ Add specification</button>
+        </div>
+        <div id="specRows" style="display:grid;gap:10px;margin-top:14px"></div>
+        <p class="muted" style="margin:10px 0 0">Examples: Brand, Display Type, Ideal For, Mechanism, Warranty, Country of Origin.</p>
+      </div>
       <div class="full panel" style="padding:14px">
         <h3 style="margin-bottom:7px">Product Image Sizes</h3>
         <p class="muted" style="line-height:1.6;margin:0 0 14px">Shortcut: sirf LARGE image upload karo. Admin automatically 600 × 600 MEDIUM, 360 × 360 LISTING aur 120 × 120 SMALL versions banayega aur preview dikhayega. Product poora visible rahega—crop ya stretch nahi hoga. Kisi size ki apni image/HTTPS URL dena ho toh woh auto version ko override karegi. Existing saved images Save dabane tak change nahi hoti.</p>
@@ -40,6 +69,32 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
       <button class="btn full" type="submit">Save Product and Images</button>
     </form>`;
   document.getElementById('cat').value=p.category||'Watches';
+  function flattenSpecification(obj,prefix=''){
+    if(Array.isArray(obj))return [[prefix,obj.map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(', ')]];
+    if(obj&&typeof obj==='object')return Object.entries(obj).flatMap(([key,value])=>flattenSpecification(value,prefix?prefix+' > '+key:key));
+    return prefix?[[prefix,String(obj??'')]]:[];
+  }
+  function suggestedSpecKeys(category){
+    if(category==='Watches')return ['Brand','Display Type','Ideal For','Mechanism','Strap Material','Case Material','Dial Color','Water Resistance','Warranty'];
+    if(category==='Perfumes')return ['Brand','Fragrance Type','Volume','Fragrance Notes','Ideal For','Country of Origin','Warranty'];
+    if(category==='Attar')return ['Brand','Fragrance Type','Volume','Fragrance Notes','Country of Origin'];
+    return ['Brand','Accessory Type','Compatible Devices','Connector / Interface','Key Features','Warranty','Country of Origin'];
+  }
+  const specRows=document.getElementById('specRows');
+  function addSpecificationRow(label='',value=''){
+    const row=document.createElement('div');row.className='spec-editor-row';
+    row.style.cssText='display:grid;grid-template-columns:1fr 1.25fr auto;gap:10px;align-items:end;padding:10px;border:1px solid #e7e6df;background:#fff';
+    row.innerHTML=`<label style="${labelStyle}">Specification name<input data-spec-label style="${inputStyle}" value="${safe(label)}" placeholder="e.g. Brand"></label><label style="${labelStyle}">Value<input data-spec-value style="${inputStyle}" value="${safe(value)}" placeholder="e.g. Casio"></label><button type="button" class="mini" style="flex:0 0 auto;color:#9e3f35" aria-label="Remove specification">Remove</button>`;
+    row.querySelector('button').onclick=()=>row.remove();specRows.appendChild(row);
+  }
+  function renderSpecificationRows(rows){specRows.innerHTML='';(rows.length?rows:suggestedSpecKeys(document.getElementById('cat').value).map(key=>[key,''])).forEach(([key,value])=>addSpecificationRow(key,value));}
+  const existingSpecRows=flattenSpecification(p.specifications||{}).filter(([key])=>key);
+  renderSpecificationRows(existingSpecRows);
+  document.getElementById('addSpecRow').onclick=()=>addSpecificationRow();
+  document.getElementById('cat').addEventListener('change',()=>{
+    const rows=[...specRows.querySelectorAll('.spec-editor-row')];
+    if(rows.every(row=>!row.querySelector('[data-spec-value]').value.trim()))renderSpecificationRows([]);
+  });
   // Keep generated files and object-URL previews local to this product editor.
   const generatedImageFiles=Object.create(null);
   const generatedImageUrls=Object.create(null);
@@ -99,8 +154,16 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
   }
   document.getElementById('pf').onsubmit=async e=>{
     e.preventDefault();
-    let specs={};
-    try{specs=JSON.parse(document.getElementById('spec').value||'{}')}catch{alert('Specifications must be valid JSON.');return}
+    const specs={};
+    for(const row of specRows.querySelectorAll('.spec-editor-row')){
+      const key=row.querySelector('[data-spec-label]').value.trim();
+      const value=row.querySelector('[data-spec-value]').value.trim();
+      if(!key||!value)continue;
+      const parts=key.split('>').map(part=>part.trim()).filter(Boolean);if(!parts.length)continue;
+      let target=specs;
+      for(const part of parts.slice(0,-1)){if(!target[part]||typeof target[part]!=='object'||Array.isArray(target[part]))target[part]={};target=target[part];}
+      target[parts[parts.length-1]]=value;
+    }
     const payload={slug:document.getElementById('slug').value,name:document.getElementById('n').value,category:document.getElementById('cat').value,price:Number(document.getElementById('price').value),mrp:Number(document.getElementById('mrp').value),stock:Number(document.getElementById('stock').value),tag:document.getElementById('tag').value,rating:Number(document.getElementById('rating').value||0),description:document.getElementById('desc').value,specifications:specs,active:true};
     try{
       await pendingResize;
