@@ -10,41 +10,62 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
   panel.innerHTML=`
     <button class="mini" type="button" onclick="products()">← Products</button>
     <h2 style="margin:16px 0">${id?'Edit':'Add'} product</h2>
-    <form id="pf" class="formgrid" style="gap:16px">
-      <label class="full" style="${labelStyle}">1. Product Name
-        <small style="display:block;font-weight:400;color:#737970;margin-top:4px">The name customers will see on the website.</small>
-        <input id="n" required style="${inputStyle}" placeholder="e.g. Casio Analog Watch" value="${safe(p.name)}">
-      </label>
-      <div class="full" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
-        <label style="${labelStyle}">2. URL Slug <small style="font-weight:400;color:#737970">(Optional)</small>
-          <input id="slug" style="${inputStyle}" placeholder="e.g. casio-analog-watch" value="${safe(p.slug||'')}">
+    <form id="pf" class="formgrid" style="gap:14px">
+      <section class="full panel" style="padding:16px;display:grid;gap:14px">
+        <div><h3 style="margin:0 0 5px">Product basics</h3><p class="muted" style="margin:0;line-height:1.5">Product name customer ko website par dikhega. URL slug naam se automatically banega; zaroorat ho toh edit kar sakte ho.</p></div>
+        <label class="full" style="${labelStyle}">Product name
+          <input id="n" required style="${inputStyle}" placeholder="e.g. Casio Analog Watch" value="${safe(p.name)}">
         </label>
-        <label style="${labelStyle}">3. Product Category
-          <select id="cat" style="${inputStyle}"><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobile Accessories</option></select>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+          <label style="${labelStyle}">Product URL slug
+            <div style="display:flex;gap:7px;align-items:center;margin-top:6px"><input id="slug" style="display:block;min-width:0;flex:1;box-sizing:border-box;padding:10px;border:1px solid #dddeda;background:#fff;margin:0" placeholder="casio-analog-watch" value="${safe((!p.slug||String(p.slug)!==String(p.slug).toLowerCase()||/[^a-z0-9-]/.test(String(p.slug)))?String(p.name||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''):p.slug)}"><button id="generateSlug" type="button" class="mini" style="flex:0 0 auto;padding:10px">Generate</button></div>
+            <small style="display:block;font-weight:400;color:#737970;margin-top:5px">Lowercase letters and hyphens, e.g. casio-analog-watch.</small>
+          </label>
+          <label style="${labelStyle}">Category
+            <select id="cat" style="${inputStyle}"><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobile Accessories</option></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="full panel" style="padding:16px;display:grid;gap:14px">
+        <div><h3 style="margin:0 0 5px">Price & stock</h3><p class="muted" style="margin:0;line-height:1.5">Set the selling price, original price and available quantity.</p></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <label style="${labelStyle}">Selling price (₹)
+            <input id="price" type="number" min="0" required style="${inputStyle}" value="${Number(p.price||0)}" placeholder="e.g. 24999">
+          </label>
+          <label style="${labelStyle}">MRP / original price (₹)
+            <input id="mrp" type="number" min="0" required style="${inputStyle}" value="${Number(p.mrp||0)}" placeholder="e.g. 32999">
+          </label>
+          <label style="${labelStyle}">Available quantity
+            <input id="stock" type="number" min="0" required style="${inputStyle}" value="${Number(p.stock||0)}" placeholder="e.g. 5">
+          </label>
+        </div>
+      </section>
+
+      <section class="full panel" style="padding:16px;display:grid;gap:14px">
+        <div><h3 style="margin:0 0 5px">Product card display</h3><p class="muted" style="margin:0;line-height:1.5">Ye label aur rating product ki card par dikhte hain.</p></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+          <label style="${labelStyle}">Card badge (optional)
+            <input id="tag" style="${inputStyle}" value="${safe(p.tag||'New')}" placeholder="New / Featured / Bestseller">
+            <small style="display:block;font-weight:400;color:#737970;margin-top:5px">Small tag, jaise New ya Bestseller.</small>
+          </label>
+          <label style="${labelStyle}">Displayed rating (out of 5)
+            <input id="rating" type="number" min="0" max="5" step="0.1" style="${inputStyle}" value="${Number(p.rating||0)}" placeholder="e.g. 4.5">
+            <small style="display:block;font-weight:400;color:#737970;margin-top:5px">Sirf genuine customer rating enter karein. Rating nahi hai toh 0 rakhein.</small>
+          </label>
+        </div>
+      </section>
+
+      <section class="full panel" style="padding:16px">
+        <label class="full" style="${labelStyle}">Product description
+          <small style="display:block;font-weight:400;color:#737970;margin-top:4px">Customer ko product ke baare mein short aur clear information dein.</small>
+          <textarea id="desc" rows="4" style="${inputStyle}" placeholder="Write a few lines about the product...">${safe(p.description||'')}</textarea>
         </label>
-        <label style="${labelStyle}">4. Selling Price (₹)
-          <input id="price" type="number" min="0" required style="${inputStyle}" value="${Number(p.price||0)}" placeholder="e.g. 24999">
-        </label>
-        <label style="${labelStyle}">5. MRP / Original Price (₹)
-          <input id="mrp" type="number" min="0" required style="${inputStyle}" value="${Number(p.mrp||0)}" placeholder="e.g. 32999">
-        </label>
-        <label style="${labelStyle}">6. Available Stock / Quantity
-          <input id="stock" type="number" min="0" required style="${inputStyle}" value="${Number(p.stock||0)}" placeholder="Number of units">
-        </label>
-        <label style="${labelStyle}">7. Product Badge
-          <input id="tag" style="${inputStyle}" value="${safe(p.tag||'New')}" placeholder="New / Featured / Bestseller">
-        </label>
-        <label style="${labelStyle}">8. Product Rating (0–5)
-          <input id="rating" type="number" min="0" max="5" step="0.1" style="${inputStyle}" value="${Number(p.rating||0)}" placeholder="e.g. 4.5">
-        </label>
-      </div>
-      <label class="full" style="${labelStyle}">9. Product Description
-        <small style="display:block;font-weight:400;color:#737970;margin-top:4px">A short, clear description of the product.</small>
-        <textarea id="desc" rows="4" style="${inputStyle}" placeholder="Write a few lines about the product...">${safe(p.description||'')}</textarea>
-      </label>
+      </section>
+
       <div class="full panel" style="padding:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-          <div><h3 style="margin:0 0 5px">10. Product Specifications</h3><p class="muted" style="margin:0;line-height:1.5">Fill in normal fields below—no JSON code required. Blank rows will not be saved.</p></div>
+          <div><h3 style="margin:0 0 5px">Product specifications</h3><p class="muted" style="margin:0;line-height:1.5">Normal fields fill karo—JSON code ki zaroorat nahi. Blank rows save nahi hongi.</p></div>
           <button id="addSpecRow" class="mini" type="button" style="flex:0 0 auto">+ Add specification</button>
         </div>
         <div id="specRows" style="display:grid;gap:10px;margin-top:14px"></div>
@@ -69,6 +90,19 @@ let csrf='';async function api(path,opt={}){const r=await fetch(path,{credential
       <button class="btn full" type="submit">Save Product and Images</button>
     </form>`;
   document.getElementById('cat').value=p.category||'Watches';
+  const nameInput=document.getElementById('n');
+  const slugInput=document.getElementById('slug');
+  const slugifyValue=value=>String(value??'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  let slugEdited=false;
+  slugInput.addEventListener('input',()=>{slugEdited=true;});
+  nameInput.addEventListener('input',()=>{
+    if(!slugEdited)slugInput.value=slugifyValue(nameInput.value);
+    const imageTitle=document.getElementById('pImageTitle');
+    if(imageTitle&&!imageTitle.dataset.manuallyEdited)imageTitle.value=nameInput.value;
+  });
+  slugInput.addEventListener('change',()=>{slugInput.value=slugifyValue(slugInput.value);});
+  document.getElementById('generateSlug').addEventListener('click',()=>{slugEdited=false;slugInput.value=slugifyValue(nameInput.value);});
+  document.getElementById('pImageTitle').addEventListener('input',e=>{e.target.dataset.manuallyEdited='true';});
   function flattenSpecification(obj,prefix=''){
     if(Array.isArray(obj))return [[prefix,obj.map(v=>typeof v==='object'?JSON.stringify(v):String(v)).join(', ')]];
     if(obj&&typeof obj==='object')return Object.entries(obj).flatMap(([key,value])=>flattenSpecification(value,prefix?prefix+' > '+key:key));
