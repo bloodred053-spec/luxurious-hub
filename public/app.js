@@ -1,6 +1,84 @@
-const BUILD_VERSION='2026-09-30-1935';
+const BUILD_VERSION='2026-10-22-categories-1';
 const state={products:[],cart:JSON.parse(localStorage.getItem('lh_cart')||'[]'),wishlist:JSON.parse(localStorage.getItem('lh_wish')||'[]'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
-const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech'};
+const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech','Wireless Speakers':'ph-tech','Wireless Neckband':'ph-tech','Wired Earphones':'ph-tech','TWS Earbuds':'ph-tech','Power Banks':'ph-tech','Microphones':'ph-tech','Holders & Stands':'ph-tech','Headphone':'ph-tech','Fans':'ph-tech','Data Cables':'ph-tech','Charger':'ph-tech'};
+const STORE_CATEGORIES=[
+  {name:'Watches',icon:'⌚',id:'watches',kicker:'THE TIME EDIT',title:'Make every moment count.'},
+  {name:'Perfumes',icon:'🧴',id:'perfumes',kicker:'THE FRAGRANCE EDIT',title:'Find your signature scent.'},
+  {name:'Attar',icon:'🪔',id:'attar',kicker:'THE ATTAR EDIT',title:'Quiet, lasting, unforgettable.'},
+  {name:'Wireless Speakers',icon:'🔊',id:'wireless-speakers',kicker:'AUDIO',title:'Bring the sound with you.'},
+  {name:'Wireless Neckband',icon:'🎧',id:'wireless-neckband',kicker:'WIRELESS AUDIO',title:'Comfort for everyday listening.'},
+  {name:'Wired Earphones',icon:'🎧',id:'wired-earphones',kicker:'AUDIO ESSENTIALS',title:'Plug in and listen.'},
+  {name:'TWS Earbuds',icon:'🎵',id:'tws-earbuds',kicker:'TRUE WIRELESS',title:'Small size. Big sound.'},
+  {name:'Power Banks',icon:'🔋',id:'power-banks',kicker:'POWER ON THE GO',title:'Power for wherever you go.'},
+  {name:'Mobile Accessories',icon:'📱',id:'mobile-accessories',kicker:'MOBILE ESSENTIALS',title:'Useful extras for your devices.'},
+  {name:'Microphones',icon:'🎙️',id:'microphones',kicker:'CREATOR AUDIO',title:'Make yourself heard.'},
+  {name:'Holders & Stands',icon:'📱',id:'holders-stands',kicker:'USEFUL TECH',title:'Hands-free everyday convenience.'},
+  {name:'Headphone',icon:'🎧',id:'headphone',kicker:'PERSONAL AUDIO',title:'Your sound, your space.'},
+  {name:'Fans',icon:'🌀',id:'fans',kicker:'EVERYDAY COMFORT',title:'A little comfort on the go.'},
+  {name:'Data Cables',icon:'🔌',id:'data-cables',kicker:'CONNECTIVITY',title:'Stay connected.'},
+  {name:'Charger',icon:'⚡',id:'charger',kicker:'POWER & CHARGING',title:'Power up your everyday.'}
+];
+function guessStoreCategory(name,current='Mobile Accessories'){
+  const legacy=['Mobile Accessories','Other Phone Accessories','Wireless Neckbands','Wireless Earbuds','Phone Holders & Stands','Chargers & Cables'];
+  const aliases={'Wireless Neckbands':'Wireless Neckband','Wireless Earbuds':'TWS Earbuds','Phone Holders & Stands':'Holders & Stands','Other Phone Accessories':'Mobile Accessories'};
+  const currentAlias=aliases[current]||current;
+  if(STORE_CATEGORIES.some(c=>c.name===currentAlias)&&!legacy.includes(current))return currentAlias;
+  const n=String(name||'').toLowerCase();
+  const rules=[
+    [/speaker/,'Wireless Speakers'],
+    [/wired.{0,12}(earphone|earbud|headphone|headset)|(earphone|earbud|headphone|headset).{0,12}wired/,'Wired Earphones'],
+    [/neckband/,'Wireless Neckband'],
+    [/\b(tws|earbuds?|airpods?)\b/,'TWS Earbuds'],
+    [/power\s*bank|powerbank|slim bank/,'Power Banks'],
+    [/microphone|\bmic\b/,'Microphones'],
+    [/charger|power adapter/,'Charger'],
+    [/\b(cable|cord|lead)\b|charging cable|data cable|lightning cable/,'Data Cables'],
+    [/holder|\bstand\b/,'Holders & Stands'],
+    [/headphones?|\bheadset\b/,'Headphone'],
+    [/\bfan\b/,'Fans']
+  ];
+  const match=rules.find(([re])=>re.test(n));
+  if(match)return match[1];
+  return STORE_CATEGORIES.some(c=>c.name===currentAlias)?currentAlias:'Mobile Accessories';
+}
+function normalizeStoreProducts(list){for(const p of list){p.category=guessStoreCategory(p.name,p.category||'Mobile Accessories')}return list;}
+function ensureStoreCategoryStyles(){if(document.getElementById('lhStoreCategoryStyles'))return;const style=document.createElement('style');style.id='lhStoreCategoryStyles';style.textContent=`
+.lh-categories-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px}
+.lh-category-card{appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0;min-height:128px;padding:14px 8px;border:1px solid #e3e4de;border-radius:10px;background:#fff;color:#20372b;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(22,40,30,.035);transition:transform .18s,box-shadow .18s,border-color .18s}
+.lh-category-card:hover{transform:translateY(-2px);border-color:#b6c1b8;box-shadow:0 8px 20px rgba(22,40,30,.09)}
+.lh-category-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:12px;background:#f1f2ee;color:#173d2c;font-size:29px;line-height:1}
+.lh-category-name{font:600 12px/1.35 Arial,sans-serif;overflow-wrap:anywhere}
+.lh-category-link{font:10px Arial,sans-serif;color:#7e806f}
+.lh-dynamic-category .section-head{align-items:end}
+.lh-dynamic-category .section-head h2{font-size:clamp(22px,2.4vw,30px)}
+.lh-dynamic-category .grid,.lh-dynamic-category .product-grid{margin-top:14px}
+.lh-dynamic-category[hidden]{display:none!important}
+@media(max-width:1000px){.lh-categories-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:680px){.lh-categories-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.lh-category-card{min-height:112px;padding:10px 5px}.lh-category-icon{width:48px;height:48px;font-size:25px}.lh-category-name{font-size:11px}}
+@media(max-width:420px){.lh-categories-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lh-category-nav{display:flex;flex:1;min-width:0;gap:18px;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.lh-category-nav::-webkit-scrollbar{display:none}.lh-category-nav a{flex:0 0 auto;white-space:nowrap}
+`;document.head.appendChild(style)}
+function renderStoreCategoryTiles(){ensureStoreCategoryStyles();const grid=document.querySelector('#shop .categories, #shop .category-grid, #shop #categoryGrid');if(!grid)return;grid.classList.add('lh-categories-grid');grid.innerHTML=STORE_CATEGORIES.map(c=>`<button type="button" class="lh-category-card" aria-label="Shop ${c.name}" onclick="showCategory('${c.name}')"><span class="lh-category-icon" aria-hidden="true">${c.icon}</span><span class="lh-category-name">${c.name}</span><span class="lh-category-link">Explore →</span></button>`).join('');const shop=document.getElementById('shop');if(shop){const kicker=shop.querySelector('.eyebrow');const heading=shop.querySelector('h2');if(kicker)kicker.textContent='SHOP BY CATEGORY';if(heading)heading.textContent='Shop by Category';}}
+function renderStoreNavigation(){const nav=document.querySelector('.navlinks');if(!nav)return;nav.classList.add('lh-category-nav');nav.innerHTML=`<a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Shop All Categories</a><a href="#watches" onclick="showCategory('Watches');return false">Watches</a><a href="#perfumes" onclick="showCategory('Perfumes');return false">Perfumes</a><a href="#attar" onclick="showCategory('Attar');return false">Attar</a><a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Audio & Accessories</a><a href="#offers">Offers</a>`;}
+function findStoreGrid(targetIds,sectionIds){for(const id of targetIds){if(document.getElementById(id))return document.getElementById(id)}for(const id of sectionIds){const section=document.getElementById(id);const grid=section?.querySelector('.grid,.product-grid');if(grid){if(!grid.id)grid.id='lhGrid-'+id;return grid}}return null}
+function renderStoreCategorySections(){
+  const fixed=[
+    {name:'Watches',targets:['watchGrid','watchesGrid'],sections:['watches']},
+    {name:'Perfumes',targets:['perfumeGrid','perfumesGrid'],sections:['perfumes']},
+    {name:'Attar',targets:['attarGrid'],sections:['attar']},
+    {name:'Mobile Accessories',targets:['accessoryGrid','accessoriesGrid'],sections:['accessories']}
+  ];
+  const used=new Set();
+  for(const item of fixed){const grid=findStoreGrid(item.targets,item.sections);if(!grid)continue;used.add(item.name);const section=grid.closest('section');const count=state.products.filter(p=>p.category===item.name&&p.active).length;if(section)section.hidden=count===0;renderCategoryWithMore(item.name,grid.id);}
+  let wrapper=document.getElementById('lhDynamicCategorySections');
+  if(!wrapper){wrapper=document.createElement('div');wrapper.id='lhDynamicCategorySections';const anchor=document.getElementById('accessories')||findStoreGrid(['accessoryGrid','accessoriesGrid'],['accessories'])?.closest('section')||document.getElementById('attar')||document.getElementById('featured');if(anchor)anchor.insertAdjacentElement('afterend',wrapper);else document.querySelector('main')?.appendChild(wrapper);}
+  wrapper.innerHTML='';
+  const extra=STORE_CATEGORIES.filter(c=>!used.has(c.name)&&state.products.some(p=>p.category===c.name&&p.active));
+  for(const c of extra){const id='lhGrid-'+c.id;const section=document.createElement('section');section.className='section lh-dynamic-category';section.id='lhSection-'+c.id;section.innerHTML=`<div class="section-head"><div><div class="eyebrow">${c.kicker}</div><h2>${c.title}</h2></div><button type="button" class="link" onclick="showCategory('${c.name}')">View all ${c.name} →</button></div><div class="grid" id="${id}"></div>`;wrapper.appendChild(section);renderCategoryWithMore(c.name,id);}
+}
+function refreshStoreCategoryViews(){renderStoreCategoryTiles();renderStoreCategorySections();}
+
 const rupee=n=>'₹'+Number(n).toLocaleString('en-IN');
 function productImage(p,size='large'){return p?.images?.[size]||p?.image_variants?.[size]?.url||p?.image_url||'';}
 async function api(path,opt={}){const r=await fetch(path,{headers:{'content-type':'application/json',...(opt.headers||{})},credentials:'same-origin',...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
@@ -8,7 +86,7 @@ function save(){localStorage.setItem('lh_cart',JSON.stringify(state.cart));local
 function updateCounts(){const c=state.cart.reduce((s,x)=>s+Number(x.qty||0),0);const w=state.wishlist.length;const b=document.getElementById('bagCount')||document.getElementById('cartBadge');const wb=document.getElementById('wishCount')||document.getElementById('wishBadge');const mb=document.getElementById('mobileBagCount');if(b)b.textContent=c;if(wb)wb.textContent=w;if(mb)mb.textContent=c}function updateBadges(){updateCounts()}
 function placeholder(cat){return `<div class="placeholder ${ph[cat]||'ph-tech'}">${cat}</div>`}
 function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*100));return `<article class="product"><div class="product-media">${productImage(p,'listing')?`<img src="${productImage(p,'listing')}" alt="${p.name}" loading="lazy">`:placeholder(p.category)}<span class="badge">${p.tag||'New'}</span><button class="heart" onclick="toggleWish(${p.id})">${state.wishlist.includes(Number(p.id))?'♥':'♡'}</button></div><div class="meta"><div class="muted">${p.category}</div><div class="name">${p.name}</div><div class="muted">${p.rating?p.rating.toFixed(1)+' ★':'New'} · ${p.stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span><span class="off">${off}% off</span></div><div class="mini-actions"><button class="mini" ${p.stock<1?'disabled':''} onclick="addCart(${p.id})">＋ Add to Cart</button><button class="mini" ${p.stock<1?'disabled':''} onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
-function render(list,target,limit=8){document.getElementById(target).innerHTML=list.filter(p=>p.active).slice(0,limit).map(card).join('')}
+function render(list,target,limit=8){const el=document.getElementById(target);if(!el)return;const items=list.filter(p=>p.active);el.innerHTML=items.slice(0,limit).map(card).join('')||(list.length===0?'<div class="lh-empty-category" style="grid-column:1/-1;padding:22px;color:#737970">Products coming soon in this category. Add products from Admin to show them here.</div>':'')}
 function renderCategoryWithMore(category,target){
   const items=state.products.filter(p=>p.category===category&&p.active);
   const grid=document.getElementById(target);
@@ -48,16 +126,14 @@ async function load(){
   const cfg=await api('/api/config');
   state.config=cfg;
   const d=await api('/api/products');
-  state.products=d.products;
+  state.products=normalizeStoreProducts(d.products||[]);
+  renderStoreNavigation();
   render(state.products,'productGrid',8);
-  renderCategoryWithMore('Watches','watchGrid');
-  renderCategoryWithMore('Perfumes','perfumeGrid');
-  renderCategoryWithMore('Attar','attarGrid');
-  renderCategoryWithMore('Mobile Accessories','accessoryGrid');
+  refreshStoreCategoryViews();
   updateCounts();
 }
-function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);document.getElementById('productTitle').textContent=cat==='ALL'?'All products':`The ${String(cat).toLowerCase()} edit.`;render(list,'productGrid',40);document.getElementById('featured').scrollIntoView({behavior:'smooth'})}
-function toggleWish(id){state.wishlist=state.wishlist.includes(id)?state.wishlist.filter(x=>x!==id):[...state.wishlist,id];save();render(state.products,'productGrid',8);render(state.products.filter(p=>p.category==='Watches'),'watchGrid',4);render(state.products.filter(p=>p.category==='Perfumes'),'perfumeGrid',4);render(state.products.filter(p=>p.category==='Attar'),'attarGrid',4);render(state.products.filter(p=>p.category==='Mobile Accessories'),'accessoryGrid',4)}
+function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);const title=document.getElementById('productTitle')||document.getElementById('catalogTitle');if(title)title.textContent=cat==='ALL'?'All products':list.length?`The ${String(cat).toLowerCase()} edit.`:`${cat} — products coming soon.`;render(list,'productGrid',40);document.getElementById('featured')?.scrollIntoView({behavior:'smooth'})}
+function toggleWish(id){state.wishlist=state.wishlist.includes(Number(id))?state.wishlist.filter(x=>Number(x)!==Number(id)):[...state.wishlist,Number(id)];save();render(state.products,'productGrid',8);refreshStoreCategoryViews()}
 function addCart(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||p.stock<1)return alert('Out of stock');const i=state.cart.find(x=>Number(x.id)===Number(id));if(i){if(i.qty>=p.stock)return alert('Maximum available stock reached');i.qty++}else state.cart.push({id:Number(id),qty:1});save()}
 function buyNow(id){state.cart=[{id:Number(id),qty:1}];save();openCheckout()}
 function openCart(){document.getElementById('cartOverlay').classList.add('show');renderCart()}
@@ -246,7 +322,7 @@ async function startOnlinePayment(){const form=document.getElementById('checkout
 async function submitOrder(e){e.preventDefault();const f=new FormData(e.target);try{const r=await api('/api/orders',{method:'POST',body:JSON.stringify({items:state.cart.map(i=>({productId:Number(i.id),qty:i.qty})),customer:Object.fromEntries(f.entries()),couponCode:state.coupon?.code||'',paymentMethod:'cod',idempotencyKey:crypto.randomUUID()})});state.cart=[];state.coupon='';save();closeModal();document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML=`<div style="text-align:center;padding:45px"><div style="font-size:40px">✓</div><div class="eyebrow">Order placed successfully</div><h2 style="font-size:38px">Thank you for shopping with Luxurious Hub.</h2><p>Your order ID is <strong>${r.order.id}</strong></p><p class="muted">Cash on Delivery · We’ll confirm your order shortly.</p><button class="btn" onclick="closeModal();trackOrder('${r.order.id}')">Track your order →</button></div>`;await load()}catch(err){alert(err.message)}}
 function trackOrder(order=''){document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML=`<button class="action" style="float:right" onclick="closeModal()">✕</button><div class="eyebrow">Order tracking</div><h2 style="font-size:38px">Track your order</h2><p class="muted">Enter your order ID and the mobile number used at checkout.</p><div class="formgrid" style="margin-top:15px"><input id="trackId" class="full" value="${order}" placeholder="Order ID"><input id="trackPhone" class="full" placeholder="Mobile number"><button class="btn full" onclick="lookupOrder()">Track Order</button></div><div id="trackResult"></div>`}
 async function lookupOrder(){try{const o=(await api('/api/orders/'+encodeURIComponent(document.getElementById('trackId').value)+'?phone='+encodeURIComponent(document.getElementById('trackPhone').value))).order;document.getElementById('trackResult').innerHTML='<div class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between"><strong>'+o.id+'</strong><span class="status">'+o.status+'</span></div><p class="muted">Placed '+new Date(o.created_at).toLocaleString('en-IN')+'</p><div>'+o.items.map(i=>i.name_snapshot+' × '+i.qty).join('<br>')+'</div><p><strong>Total '+rupee(o.total)+'</strong> · '+o.payment_method.toUpperCase()+'</p></div>'}catch(e){document.getElementById('trackResult').innerHTML='<div class="notice-box" style="margin-top:16px">'+e.message+'</div>'}}
-function openAccount(){openSimple('Your account','Orders placed from this browser are not a login account. Use Track Order with your order ID and mobile number.')}function openWishlist(){const items=state.wishlist.map(id=>state.products.find(p=>Number(p.id)===Number(id))).filter(Boolean);openSimple('Wishlist',items.length?items.map(p=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #e7e6df"><div><strong>'+p.name+'</strong><div style="margin-top:4px;color:#6f756f">'+rupee(p.price)+'</div></div><button class="mini" style="flex:0 0 auto" onclick="removeFromWishlist('+Number(p.id)+')">Remove</button></div>').join(''):'Your wishlist is empty.')}function removeFromWishlist(id){state.wishlist=state.wishlist.filter(x=>Number(x)!==Number(id));save();render(state.products,'productGrid',8);render(state.products.filter(p=>p.category==='Watches'),'watchGrid',4);render(state.products.filter(p=>p.category==='Perfumes'),'perfumeGrid',4);render(state.products.filter(p=>p.category==='Attar'),'attarGrid',4);render(state.products.filter(p=>p.category==='Mobile Accessories'),'accessoryGrid',4);openWishlist();toast('Removed from wishlist')}function openContact(){api('/api/config').then(c=>openSimple('Contact Us',(c.whatsapp?'<p><a class="btn" target="_blank" href="https://wa.me/'+c.whatsapp.replace(/\D/g,'')+'">Chat on WhatsApp →</a></p>':'')+'<p>Contact details can be added in Admin Settings.</p>')).catch(()=>openSimple('Contact Us','Contact details can be added in Admin Settings.'))}function openPolicy(t){openSimple(t,'Please configure the final store policy content in your business setup before launch.')}function openSimple(t,b){document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML='<button class="action" style="float:right" onclick="closeModal()">✕</button><div class="eyebrow">Luxurious Hub</div><h2 style="font-size:36px">'+t+'</h2><div style="margin-top:12px;color:#6f756f;line-height:1.7">'+b+'</div>'}
+function openAccount(){openSimple('Your account','Orders placed from this browser are not a login account. Use Track Order with your order ID and mobile number.')}function openWishlist(){const items=state.wishlist.map(id=>state.products.find(p=>Number(p.id)===Number(id))).filter(Boolean);openSimple('Wishlist',items.length?items.map(p=>'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #e7e6df"><div><strong>'+p.name+'</strong><div style="margin-top:4px;color:#6f756f">'+rupee(p.price)+'</div></div><button class="mini" style="flex:0 0 auto" onclick="removeFromWishlist('+Number(p.id)+')">Remove</button></div>').join(''):'Your wishlist is empty.')}function removeFromWishlist(id){state.wishlist=state.wishlist.filter(x=>Number(x)!==Number(id));save();render(state.products,'productGrid',8);refreshStoreCategoryViews();openWishlist();toast('Removed from wishlist')}function openContact(){api('/api/config').then(c=>openSimple('Contact Us',(c.whatsapp?'<p><a class="btn" target="_blank" href="https://wa.me/'+c.whatsapp.replace(/\D/g,'')+'">Chat on WhatsApp →</a></p>':'')+'<p>Contact details can be added in Admin Settings.</p>')).catch(()=>openSimple('Contact Us','Contact details can be added in Admin Settings.'))}function openPolicy(t){openSimple(t,'Please configure the final store policy content in your business setup before launch.')}function openSimple(t,b){document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML='<button class="action" style="float:right" onclick="closeModal()">✕</button><div class="eyebrow">Luxurious Hub</div><h2 style="font-size:36px">'+t+'</h2><div style="margin-top:12px;color:#6f756f;line-height:1.7">'+b+'</div>'}
 async function openAdmin(){document.getElementById('modal').classList.add('show');(document.getElementById('modalContent')||document.getElementById('modalCard')).innerHTML='<div id="adminRoot"></div>';await adminSession()}
 let csrf='';async function adminSession(){const s=await api('/api/admin/session');if(!s.authenticated)return adminLogin();csrf=s.csrf;adminHome()}
 function adminLogin(){document.getElementById('adminRoot').innerHTML='<div style="max-width:420px;margin:40px auto"><div class="eyebrow">Luxurious Hub</div><h2 style="font-size:36px">Admin Login</h2><form id="loginForm" class="formgrid" style="margin-top:18px"><input id="au" required placeholder="Username"><input id="ap" required type="password" placeholder="Password"><button class="btn full">Sign In</button></form><div id="loginMsg" class="muted" style="margin-top:10px"></div></div>';document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/admin/login',{method:'POST',body:JSON.stringify({username:document.getElementById('au').value,password:document.getElementById('ap').value})});csrf=r.csrf;adminHome()}catch(err){document.getElementById('loginMsg').textContent=err.message}}}
@@ -318,10 +394,8 @@ async function adminEditProduct(id) {
       <label style="${labelStyle}">
         3. Product Category
         <select id="pc" style="${inputStyle}">
-          <option>Watches</option>
-          <option>Perfumes</option>
-          <option>Attar</option>
-          <option>Mobile Accessories</option>
+          <option>Watches</option><option>Perfumes</option><option>Attar</option>
+          <option>Wireless Speakers</option><option>Wireless Neckband</option><option>Wired Earphones</option><option>TWS Earbuds</option><option>Power Banks</option><option>Mobile Accessories</option><option>Microphones</option><option>Holders &amp; Stands</option><option>Headphone</option><option>Fans</option><option>Data Cables</option><option>Charger</option>
         </select>
       </label>
 
@@ -426,7 +500,7 @@ async function adminEditProduct(id) {
     </form>
   `;
 
-  document.getElementById('pc').value = p.category;
+  document.getElementById('pc').value = guessStoreCategory(p.name,p.category||'Watches');
   if (p.image_variants?.large) {
     const v = p.image_variants.large;
     document.getElementById('pImageType').value = v.image_type || 'product';
