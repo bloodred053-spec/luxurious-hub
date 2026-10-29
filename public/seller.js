@@ -22,22 +22,41 @@ function showNotice(message,type='success'){
 }
 function showAuth(mode='register',notice=''){
   currentSeller=null;sellerCsrf='';
-  sellerApp.innerHTML=`<div class="seller-auth-card"><div class="seller-auth-intro"><div class="eyebrow">START SELLING</div><h2>Seller account</h2><p>Apply with your business details. The admin reviews applications before enabling seller access.</p></div><div class="seller-auth-tabs" role="tablist"><button type="button" class="${mode==='register'?'active':''}" data-seller-auth="register">Create seller account</button><button type="button" class="${mode==='login'?'active':''}" data-seller-auth="login">Seller login</button></div><div id="sellerNotice" class="seller-notice ${notice?'is-success':''}" ${notice?'':'hidden'}>${esc(notice)}</div><form id="sellerRegisterForm" class="seller-form" ${mode==='register'?'':'hidden'}>
-    <label>Business / store name *<input name="businessName" required maxlength="160" autocomplete="organization" placeholder="Your store name"></label>
-    <label>Contact person *<input name="contactName" required maxlength="120" autocomplete="name" placeholder="Full name"></label>
-    <div class="seller-form-two"><label>Email address *<input name="email" type="email" required maxlength="254" autocomplete="email" placeholder="you@example.com"></label><label>Mobile number *<input name="phone" type="tel" required inputmode="numeric" pattern="[0-9 +()-]{10,18}" autocomplete="tel" placeholder="10-digit mobile"></label></div>
-    <label>GSTIN (optional)<input name="gstin" maxlength="15" autocapitalize="characters" placeholder="15-character GSTIN"></label>
-    <label>Business address (optional)<textarea name="address" rows="2" maxlength="600" placeholder="Pickup / business address"></textarea></label>
-    <div class="seller-form-two"><label>Password *<input name="password" type="password" minlength="10" required autocomplete="new-password" placeholder="At least 10 characters"></label><label>Confirm password *<input name="confirmPassword" type="password" minlength="10" required autocomplete="new-password" placeholder="Repeat password"></label></div>
-    <button class="btn seller-submit" type="submit">Submit seller application →</button><p class="seller-form-note">By applying, you confirm the details are accurate. Do not submit payment card details or passwords used on other websites.</p>
-  </form>
-  <form id="sellerLoginForm" class="seller-form" ${mode==='login'?'':'hidden'}><label>Email address *<input name="email" type="email" required autocomplete="email" placeholder="Seller email"></label><label>Password *<input name="password" type="password" required autocomplete="current-password" placeholder="Your password"></label><button class="btn seller-submit" type="submit">Sign in to Seller Centre →</button><p class="seller-form-note">You can sign in after the admin approves your application.</p></form></div>`;
+  sellerApp.innerHTML=`<div class="seller-auth-card seller-auth-card-pro">
+    <div class="seller-auth-intro"><div class="eyebrow">SELLER CENTRE · INDIA</div><h2>${mode==='login'?'Welcome back, seller':'Start selling on Luxurious Hub'}</h2><p>${mode==='login'?'Sign in to manage your products and orders.':'Create your seller account in a few simple steps. Your application will be reviewed by our team.'}</p></div>
+    <div class="seller-auth-tabs" role="tablist"><button type="button" class="${mode==='register'?'active':''}" data-seller-auth="register">Create account</button><button type="button" class="${mode==='login'?'active':''}" data-seller-auth="login">Seller login</button></div>
+    <div class="seller-stepper" id="sellerStepper" ${mode==='register'?'':'hidden'}><div class="seller-step active" data-step-indicator="1"><span>1</span><div><b>Account details</b><small>Email, mobile & password</small></div></div><div class="seller-step" data-step-indicator="2"><span>2</span><div><b>Business details</b><small>Store & business address</small></div></div></div>
+    <div id="sellerNotice" class="seller-notice ${notice?'is-success':''}" ${notice?'':'hidden'}>${esc(notice)}</div>
+    <form id="sellerRegisterForm" class="seller-form seller-register-wizard" ${mode==='register'?'':'hidden'}>
+      <section class="seller-wizard-page" data-wizard-page="1"><div class="seller-section-heading"><span>STEP 1 OF 2</span><h3>Create your login</h3><p>Use an email address and mobile number you can access.</p></div>
+        <label>Email address *<input name="email" type="email" required maxlength="254" autocomplete="email" placeholder="you@example.com"></label>
+        <label>Mobile number *<input name="phone" type="tel" required inputmode="numeric" pattern="[0-9 +()-]{10,18}" autocomplete="tel" placeholder="10-digit Indian mobile number"></label>
+        <div class="seller-form-two"><label>Password *<input name="password" type="password" minlength="10" required autocomplete="new-password" placeholder="At least 10 characters"></label><label>Confirm password *<input name="confirmPassword" type="password" minlength="10" required autocomplete="new-password" placeholder="Re-enter password"></label></div>
+        <div class="seller-security-note"><strong>Keep your account safe</strong><span>Use a unique password. Email/mobile OTP verification is not currently enabled on this portal.</span></div>
+        <button class="btn seller-submit seller-next" type="button" id="sellerNextStep">Continue to business details →</button>
+      </section>
+      <section class="seller-wizard-page" data-wizard-page="2" hidden><div class="seller-section-heading"><span>STEP 2 OF 2</span><h3>Tell us about your business</h3><p>These details help our team review your seller application.</p></div>
+        <label>Business / store name *<input name="businessName" required maxlength="160" autocomplete="organization" placeholder="e.g. Your Store Name"></label>
+        <label>Contact person / owner name *<input name="contactName" required maxlength="120" autocomplete="name" placeholder="Full name"></label>
+        <label>GSTIN <span class="seller-optional">Optional</span><input name="gstin" maxlength="15" autocapitalize="characters" placeholder="15-character GSTIN, if available"></label>
+        <label>Business / pickup address <span class="seller-optional">Optional for application</span><textarea name="address" rows="3" maxlength="600" autocomplete="street-address" placeholder="Shop / building, street, area, city, state and PIN code"></textarea></label>
+        <div class="seller-review-box"><strong>What happens next?</strong><p>Submit your application. Luxurious Hub admin will review it and approve or decline access. You can sign in after approval. This form does not perform GST, KYC, bank or address verification.</p></div>
+        <div class="seller-form-actions"><button type="button" class="mini" id="sellerBackStep">← Back</button><button class="btn seller-submit" type="submit">Submit seller application →</button></div>
+      </section>
+      <p class="seller-form-note">By applying, you confirm that the details provided are accurate. Never share payment card details or passwords used on other websites.</p>
+    </form>
+    <form id="sellerLoginForm" class="seller-form" ${mode==='login'?'':'hidden'}><label>Email address *<input name="email" type="email" required autocomplete="email" placeholder="Seller email"></label><label>Password *<input name="password" type="password" required autocomplete="current-password" placeholder="Your password"></label><button type="submit" class="btn seller-submit">Sign in to Seller Centre →</button><p class="seller-form-note">You can sign in after the admin approves your application.</p></form>
+  </div>`;
   sellerApp.querySelectorAll('[data-seller-auth]').forEach(button=>button.addEventListener('click',()=>showAuth(button.dataset.sellerAuth)));
   const registerForm=document.getElementById('sellerRegisterForm');
+  let wizardStep=1;
+  const setWizardStep=step=>{wizardStep=step;registerForm.querySelectorAll('[data-wizard-page]').forEach(page=>page.hidden=Number(page.dataset.wizardPage)!==step);sellerApp.querySelectorAll('[data-step-indicator]').forEach(item=>{const n=Number(item.dataset.stepIndicator);item.classList.toggle('active',n===step);item.classList.toggle('complete',n<step);});const notice=document.getElementById('sellerNotice');if(notice)notice.hidden=true;};
+  document.getElementById('sellerNextStep').addEventListener('click',()=>{const page=registerForm.querySelector('[data-wizard-page="1"]');const required=[...page.querySelectorAll('input[required]')];for(const input of required){if(!input.reportValidity())return;}const form=new FormData(registerForm);if(String(form.get('password')||'')!==String(form.get('confirmPassword')||'')){showNotice('Passwords do not match.','error');return;}if(String(form.get('password')||'').length<10){showNotice('Password must be at least 10 characters.','error');return;}setWizardStep(2);});
+  document.getElementById('sellerBackStep').addEventListener('click',()=>setWizardStep(1));
   registerForm.addEventListener('submit',async event=>{
-    event.preventDefault();const form=new FormData(registerForm);const password=String(form.get('password')||'');
-    if(password!==String(form.get('confirmPassword')||'')){showNotice('Passwords do not match.','error');return;}
-    const submit=registerForm.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent='Submitting…';
+    event.preventDefault();if(wizardStep!==2)return;const form=new FormData(registerForm);const password=String(form.get('password')||'');
+    if(password!==String(form.get('confirmPassword')||'')){showNotice('Passwords do not match.','error');setWizardStep(1);return;}
+    const submit=registerForm.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent='Submitting application…';
     try{
       const result=await sellerApi('/api/seller/register',{method:'POST',body:JSON.stringify({businessName:form.get('businessName'),contactName:form.get('contactName'),email:form.get('email'),phone:form.get('phone'),gstin:form.get('gstin'),address:form.get('address'),password})});
       showAuth('login',result.message||'Application submitted. Please wait for admin approval before signing in.');
