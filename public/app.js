@@ -1,4 +1,4 @@
-const BUILD_VERSION='2026-11-04-storefront-phase-2';
+const BUILD_VERSION='2026-11-05-storefront-phase-3';
 function readStoredArray(key){
   try{
     const value=JSON.parse(localStorage.getItem(key)||'[]');
@@ -9,6 +9,24 @@ function readStoredArray(key){
   }
 }
 const state={products:[],cart:readStoredArray('lh_cart'),wishlist:readStoredArray('lh_wish'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
+function escapeHTML(value){return String(value??'').replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));}
+function safeImageUrl(value){
+  const raw=String(value??'').trim();
+  if(!raw)return '';
+  if(raw.startsWith('/media/')&&!raw.startsWith('//'))return raw;
+  try{const url=new URL(raw,window.location.origin);return ['https:','http:'].includes(url.protocol)?url.href:'';}catch{return '';}
+}
+function reconcileSavedShoppingState(){
+  const active=new Map(state.products.filter(p=>p&&p.active).map(p=>[Number(p.id),p]));
+  state.cart=state.cart.map(item=>{
+    const product=active.get(Number(item?.id));
+    const qty=Math.floor(Number(item?.qty));
+    if(!product||!Number.isFinite(qty)||qty<1||Number(product.stock)<1)return null;
+    return {id:Number(product.id),qty:Math.min(qty,Math.floor(Number(product.stock)))};
+  }).filter(Boolean);
+  state.wishlist=[...new Set(state.wishlist.map(Number).filter(id=>active.has(id)))];
+  save();
+}
 const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech','Wireless Speakers':'ph-tech','Wireless Neckband':'ph-tech','Wired Earphones':'ph-tech','TWS Earbuds':'ph-tech','Power Banks':'ph-tech','Microphones':'ph-tech','Holders & Stands':'ph-tech','Headphone':'ph-tech','Fans':'ph-tech','Data Cables':'ph-tech','Charger':'ph-tech'};
 const STORE_CATEGORIES=[
   {name:'Watches',image:'/assets/categories/watches.webp',id:'watches',kicker:'THE TIME EDIT',title:'Make every moment count.'},
@@ -164,12 +182,25 @@ async function load(){
 }
 function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);const title=document.getElementById('productTitle')||document.getElementById('catalogTitle');if(title)title.textContent=cat==='ALL'?'All products':list.length?`The ${String(cat).toLowerCase()} edit.`:`${cat} — products coming soon.`;render(list,'productGrid',40);document.getElementById('featured')?.scrollIntoView({behavior:'smooth'})}
 function toggleWish(id){state.wishlist=state.wishlist.includes(Number(id))?state.wishlist.filter(x=>Number(x)!==Number(id)):[...state.wishlist,Number(id)];save();render(state.products,'productGrid',8);refreshStoreCategoryViews()}
-function addCart(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||!p.active||p.stock<1)return alert('This product is currently unavailable.');const i=state.cart.find(x=>Number(x.id)===Number(id));if(i){if(i.qty>=p.stock)return alert('Maximum available stock reached');i.qty++}else state.cart.push({id:Number(id),qty:1});save();if(typeof toast==='function')toast('Added to your bag')}
-function buyNow(id){state.cart=[{id:Number(id),qty:1}];save();openCheckout()}
+function addCart(id,requestedQty=1){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||!p.active||p.stock<1)return alert('This product is currently unavailable.');const qty=Math.max(1,Math.floor(Number(requestedQty)||1));const i=state.cart.find(x=>Number(x.id)===Number(id));const next=(i?.qty||0)+qty;if(next>p.stock)return alert('Only '+p.stock+' unit(s) are currently available.');if(i)i.qty=next;else state.cart.push({id:Number(id),qty});save();if(typeof toast==='function')toast('Added to your bag')}
+function buyNow(id,requestedQty=1){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||!p.active||p.stock<1)return alert('This product is currently unavailable.');const qty=Math.max(1,Math.floor(Number(requestedQty)||1));if(qty>p.stock)return alert('Only '+p.stock+' unit(s) are currently available.');state.cart=[{id:Number(id),qty}];save();openCheckout()}
 function openCart(){document.getElementById('cartOverlay').classList.add('show');renderCart()}
 function closeCart(){document.getElementById('cartOverlay').classList.remove('show')}
 function cartTotals(){let subtotal=0;for(const i of state.cart){const p=state.products.find(x=>Number(x.id)===Number(i.id));if(p)subtotal+=Number(p.price)*i.qty}let discount=0;if(state.coupon)discount=state.coupon.type==='percent'?Math.min(subtotal*state.coupon.value/100,state.coupon.max_discount||subtotal):Math.min(state.coupon.value,state.coupon.max_discount||state.coupon.value);const shipping=subtotal>=499||subtotal===0?0:49;return{subtotal,discount,shipping,total:subtotal-discount+shipping}}
-function renderCart(){const el=document.getElementById('cartItems');if(!state.cart.length){el.innerHTML='<div style="padding:50px 0;text-align:center;color:#777">Your bag is empty.</div>';document.getElementById('cartSummary').innerHTML='';return}el.innerHTML=state.cart.map(i=>{const p=state.products.find(x=>Number(x.id)===Number(i.id));if(!p)return '';return `<div class="cart-item"><div>${productImage(p,'small')?`<img src="${productImage(p,'small')}" alt="${p.name}">`:placeholder(p.category)}</div><div><div class="muted">${p.category}</div><div class="name">${p.name}</div><strong>${rupee(p.price)}</strong><div class="qty"><button onclick="qty(${p.id},-1)">−</button><span>${i.qty}</span><button onclick="qty(${p.id},1)">＋</button></div></div><button class="action" onclick="removeCart(${p.id})">✕</button></div>`}).join('');const t=cartTotals();document.getElementById('cartSummary').innerHTML=`<div class="summary"><div class="cart-coupon"><input id="couponInput" placeholder="Coupon code"><button onclick="applyCoupon()">Apply</button></div>${state.coupon?`<div class="row"><span>Coupon ${state.coupon.code}</span><strong>− ${rupee(t.discount)}</strong></div>`:''}<div class="row"><span>Subtotal</span><strong>${rupee(t.subtotal)}</strong></div><div class="row"><span>Shipping</span><span>${t.shipping?rupee(t.shipping):'Free'}</span></div><div class="row" style="font-size:17px;border-top:1px solid #ddd;padding-top:10px"><strong>Total</strong><strong>${rupee(t.total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Continue to checkout →</button></div>`}
+function renderCart(){
+  const el=document.getElementById('cartItems');
+  if(!el)return;
+  state.cart=state.cart.filter(i=>state.products.some(p=>Number(p.id)===Number(i.id)&&p.active&&Number(p.stock)>0));
+  if(!state.cart.length){el.innerHTML='<div style="padding:50px 0;text-align:center;color:#777">Your bag is empty.</div>';document.getElementById('cartSummary').innerHTML='';save();return;}
+  el.innerHTML=state.cart.map(i=>{
+    const p=state.products.find(x=>Number(x.id)===Number(i.id));
+    if(!p)return '';
+    const image=safeImageUrl(productImage(p,'small'));
+    return `<div class="cart-item"><div>${image?`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}">`:placeholder(p.category)}</div><div><div class="muted">${escapeHTML(p.category)}</div><div class="name">${escapeHTML(p.name)}</div><strong>${rupee(p.price)}</strong><div class="qty"><button type="button" aria-label="Decrease ${escapeHTML(p.name)} quantity" onclick="qty(${Number(p.id)},-1)">−</button><span>${i.qty}</span><button type="button" aria-label="Increase ${escapeHTML(p.name)} quantity" ${i.qty>=p.stock?'disabled':''} onclick="qty(${Number(p.id)},1)">＋</button></div></div><button class="action" aria-label="Remove ${escapeHTML(p.name)} from bag" onclick="removeCart(${Number(p.id)})">✕</button></div>`;
+  }).join('');
+  const t=cartTotals();
+  document.getElementById('cartSummary').innerHTML=`<div class="summary"><div class="cart-coupon"><input id="couponInput" placeholder="Coupon code" aria-label="Coupon code"><button onclick="applyCoupon()">Apply</button></div>${state.coupon?`<div class="row"><span>Coupon ${escapeHTML(state.coupon.code)}</span><strong>− ${rupee(t.discount)}</strong></div>`:''}<div class="row"><span>Subtotal</span><strong>${rupee(t.subtotal)}</strong></div><div class="row"><span>Shipping</span><span>${t.shipping?rupee(t.shipping):'Free'}</span></div><div class="row" style="font-size:17px;border-top:1px solid #ddd;padding-top:10px"><strong>Total</strong><strong>${rupee(t.total)}</strong></div><button class="btn" style="width:100%" onclick="openCheckout()">Continue to checkout →</button></div>`;
+}
 function qty(id,d){const i=state.cart.find(x=>Number(x.id)===Number(id));const p=state.products.find(x=>Number(x.id)===Number(id));if(!i||!p)return;i.qty=Math.max(1,Math.min(p.stock,i.qty+d));save();renderCart()}
 function removeCart(id){state.cart=state.cart.filter(x=>Number(x.id)!==Number(id));save();renderCart()}
 async function applyCoupon(){const code=document.getElementById('couponInput').value.trim();if(!code)return;try{state.coupon=await api('/api/coupons/validate',{method:'POST',body:JSON.stringify({code,subtotal:cartTotals().subtotal})});renderCart()}catch(e){alert(e.message)}}
@@ -185,6 +216,19 @@ function openProduct(id){
   const esc=v=>String(v??'').replace(/&/g,'&amp;')
     .replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+
+  const gallery=[];
+  const addGalleryImage=(url,label='Product image')=>{
+    const safeUrl=safeImageUrl(url);
+    if(safeUrl&&!gallery.some(item=>item.url===safeUrl))gallery.push({url:safeUrl,label});
+  };
+  const variantEntries=Object.entries(p.image_variants||{}).sort((a,b)=>{
+    const order={large:0,medium:1,listing:2,small:3};
+    return (order[a[0]]??9)-(order[b[0]]??9);
+  });
+  variantEntries.forEach(([size,variant])=>addGalleryImage(variant?.url,variant?.title||`${size} product image`));
+  addGalleryImage(productImage(p,'large'),p.name||'Product image');
+  if(!gallery.length)addGalleryImage(p.image_url,p.name||'Product image');
 
   let specs=p.specifications||{};
   if(typeof specs==='string'){
@@ -227,11 +271,11 @@ function openProduct(id){
       onclick="closeModal()">✕</button>
 
     <div class="product-detail">
-      <div>
-        ${p.image_url
-          ?`<img class="mainimg" src="${esc(productImage(p,'large'))}"
-              alt="${esc(p.name)}">`
+      <div class="lh-product-gallery">
+        ${gallery.length
+          ?`<img id="lhProductMainImage" class="mainimg" src="${esc(gallery[0].url)}" alt="${esc(p.name)}" loading="eager" decoding="async">`
           :placeholder(p.category)}
+        ${gallery.length>1?`<div class="lh-product-thumbnails" aria-label="More product images">${gallery.map((item,index)=>`<button type="button" class="lh-product-thumb ${index===0?'active':''}" data-gallery-index="${index}" aria-label="View ${esc(item.label)}" aria-pressed="${index===0}"><img src="${esc(item.url)}" alt="" loading="lazy"></button>`).join('')}</div>`:''}
       </div>
 
       <div>
@@ -280,13 +324,17 @@ function openProduct(id){
           </p>
         </section>
 
-        <div class="cta" style="margin-top:20px">
-          <button class="btn"
-            onclick="addCart(${Number(p.id)});closeModal();openCart()">
+        <div class="lh-detail-stock" role="status">${Number(p.stock)>0?`${Number(p.stock)} unit(s) available`:'Currently out of stock'}</div>
+        <div class="lh-detail-buy-row">
+          <label class="lh-detail-quantity">Quantity
+            <input id="lhProductQuantity" type="number" min="1" max="${Math.max(1,Number(p.stock)||1)}" value="1" inputmode="numeric" ${Number(p.stock)<1?'disabled':''}>
+          </label>
+          <button class="btn" ${Number(p.stock)<1?'disabled':''}
+            onclick="addCart(${Number(p.id)},document.getElementById('lhProductQuantity')?.value||1);if(state.cart.some(item=>Number(item.id)===${Number(p.id)})){closeModal();openCart()}">
             Add to Cart
           </button>
-          <button class="btn alt"
-            onclick="buyNow(${Number(p.id)})">Buy Now</button>
+          <button class="btn alt" ${Number(p.stock)<1?'disabled':''}
+            onclick="buyNow(${Number(p.id)},document.getElementById('lhProductQuantity')?.value||1)">Buy Now</button>
         </div>
       </div>
     </div>`;
@@ -341,6 +389,21 @@ function openProduct(id){
     btn.onclick=()=>{
       expanded=false;
       renderDetails(btn.dataset.specTab);
+    };
+  });
+
+  panel.querySelectorAll('[data-gallery-index]').forEach(btn=>{
+    btn.onclick=()=>{
+      const item=gallery[Number(btn.dataset.galleryIndex)];
+      const main=panel.querySelector('#lhProductMainImage');
+      if(!item||!main)return;
+      main.src=item.url;
+      main.alt=esc(p.name)+' — '+item.label;
+      panel.querySelectorAll('[data-gallery-index]').forEach(thumb=>{
+        const active=thumb===btn;
+        thumb.classList.toggle('active',active);
+        thumb.setAttribute('aria-pressed',String(active));
+      });
     };
   });
 
@@ -698,5 +761,25 @@ document.addEventListener('click',e=>{
   const product=state.products.find(p=>String(p.name).trim()===name);
   if(product)openProduct(product.id);
 });
+
+(function addPhase3Styles(){
+  if(document.getElementById('lhPhase3Styles'))return;
+  const style=document.createElement('style');style.id='lhPhase3Styles';
+  style.textContent=`
+    .lh-product-gallery{min-width:0}
+    .lh-product-gallery .mainimg{display:block;width:100%;max-height:560px;object-fit:contain;background:#f7f7f2;cursor:zoom-in}
+    .lh-product-thumbnails{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+    .lh-product-thumb{width:68px;height:68px;padding:3px;border:1px solid #dedfd8;background:#fff;cursor:pointer;border-radius:3px}
+    .lh-product-thumb.active{border:2px solid #18392b}
+    .lh-product-thumb img{width:100%;height:100%;object-fit:contain;display:block}
+    .lh-detail-stock{font-size:12px;color:#667267;margin-top:14px}
+    .lh-detail-buy-row{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin-top:12px}
+    .lh-detail-quantity{display:grid;gap:5px;font-size:11px;color:#656b65}
+    .lh-detail-quantity input{width:76px;min-height:42px;padding:8px;border:1px solid #dddeda;background:#fff}
+    .lh-detail-buy-row .btn:disabled{opacity:.45;cursor:not-allowed}
+    @media(max-width:650px){.lh-product-gallery .mainimg{max-height:380px}.lh-product-thumb{width:58px;height:58px}.lh-detail-buy-row{align-items:stretch}.lh-detail-buy-row .btn{flex:1}}
+  `;
+  document.head.appendChild(style);
+})();
 
 load().catch(err=>{document.getElementById('productGrid').innerHTML='<div class="panel">Store is starting up. Please refresh in a moment.</div>'});updateCounts();
