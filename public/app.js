@@ -1,5 +1,14 @@
-const BUILD_VERSION='2026-10-24-premium-categories-2';
-const state={products:[],cart:JSON.parse(localStorage.getItem('lh_cart')||'[]'),wishlist:JSON.parse(localStorage.getItem('lh_wish')||'[]'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
+const BUILD_VERSION='2026-11-04-storefront-phase-2';
+function readStoredArray(key){
+  try{
+    const value=JSON.parse(localStorage.getItem(key)||'[]');
+    return Array.isArray(value)?value:[];
+  }catch(error){
+    console.warn('Could not read saved shopping data:',key,error);
+    return [];
+  }
+}
+const state={products:[],cart:readStoredArray('lh_cart'),wishlist:readStoredArray('lh_wish'),coupon:'',config:{onlinePaymentEnabled:false,codEnabled:true}};
 const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech','Wireless Speakers':'ph-tech','Wireless Neckband':'ph-tech','Wired Earphones':'ph-tech','TWS Earbuds':'ph-tech','Power Banks':'ph-tech','Microphones':'ph-tech','Holders & Stands':'ph-tech','Headphone':'ph-tech','Fans':'ph-tech','Data Cables':'ph-tech','Charger':'ph-tech'};
 const STORE_CATEGORIES=[
   {name:'Watches',image:'/assets/categories/watches.webp',id:'watches',kicker:'THE TIME EDIT',title:'Make every moment count.'},
@@ -91,9 +100,22 @@ function productImage(p,size='large'){return p?.images?.[size]||p?.image_variant
 async function api(path,opt={}){const r=await fetch(path,{headers:{'content-type':'application/json',...(opt.headers||{})},credentials:'same-origin',...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
 function save(){localStorage.setItem('lh_cart',JSON.stringify(state.cart));localStorage.setItem('lh_wish',JSON.stringify(state.wishlist));updateCounts()}
 function updateCounts(){const c=state.cart.reduce((s,x)=>s+Number(x.qty||0),0);const w=state.wishlist.length;const b=document.getElementById('bagCount')||document.getElementById('cartBadge');const wb=document.getElementById('wishCount')||document.getElementById('wishBadge');const mb=document.getElementById('mobileBagCount');if(b)b.textContent=c;if(wb)wb.textContent=w;if(mb)mb.textContent=c}function updateBadges(){updateCounts()}
-function placeholder(cat){return `<div class="placeholder ${ph[cat]||'ph-tech'}">${cat}</div>`}
-function card(p){const off=Math.max(0,Math.round((1-p.price/Math.max(p.mrp,1))*100));return `<article class="product"><div class="product-media">${productImage(p,'listing')?`<img src="${productImage(p,'listing')}" alt="${p.name}" loading="lazy">`:placeholder(p.category)}<span class="badge">${p.tag||'New'}</span><button class="heart" onclick="toggleWish(${p.id})">${state.wishlist.includes(Number(p.id))?'♥':'♡'}</button></div><div class="meta"><div class="muted">${p.category}</div><div class="name">${p.name}</div><div class="muted">${p.rating?p.rating.toFixed(1)+' ★':'New'} · ${p.stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(p.price)}</span><span class="mrp">${rupee(p.mrp)}</span><span class="off">${off}% off</span></div><div class="mini-actions"><button class="mini" ${p.stock<1?'disabled':''} onclick="addCart(${p.id})">＋ Add to Cart</button><button class="mini" ${p.stock<1?'disabled':''} onclick="buyNow(${p.id})">Buy Now</button></div></div></article>`}
-function render(list,target,limit=8){const el=document.getElementById(target);if(!el)return;const items=list.filter(p=>p.active);el.innerHTML=items.slice(0,limit).map(card).join('')||(list.length===0?'<div class="lh-empty-category" style="grid-column:1/-1;padding:22px;color:#737970">Products coming soon in this category. Add products from Admin to show them here.</div>':'')}
+function placeholder(cat){return `<div class="placeholder ${ph[cat]||'ph-tech'}">${escapeHTML(cat||'Accessories')}</div>`}
+function card(p){
+  const id=Number(p.id),price=Number(p.price)||0,mrp=Number(p.mrp)||0,stock=Math.max(0,Number(p.stock)||0);
+  const off=mrp>price&&mrp>0?Math.round((1-price/mrp)*100):0;
+  const image=safeImageUrl(productImage(p,'listing'));
+  const wished=state.wishlist.includes(id);
+  const rating=Number(p.rating);
+  return `<article class="product" data-product-id="${id}"><div class="product-media">${image?`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`:placeholder(p.category)}<span class="badge">${escapeHTML(p.tag||'New')}</span><button class="heart" type="button" aria-label="${wished?'Remove':'Add'} ${escapeHTML(p.name)} ${wished?'from':'to'} wishlist" aria-pressed="${wished}" onclick="toggleWish(${id})">${wished?'♥':'♡'}</button></div><div class="meta"><div class="muted">${escapeHTML(p.category)}</div><div class="name">${escapeHTML(p.name)}</div><div class="muted">${Number.isFinite(rating)&&rating>0?rating.toFixed(1)+' ★':'New'} · ${stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(price)}</span>${off?`<span class="mrp">${rupee(mrp)}</span><span class="off">${off}% off</span>`:''}</div><div class="mini-actions"><button class="mini" ${stock<1?'disabled':''} onclick="addCart(${id})">＋ Add to Cart</button><button class="mini" ${stock<1?'disabled':''} onclick="buyNow(${id})">Buy Now</button></div></div></article>`;
+}
+function render(list,target,limit=8){
+  const el=document.getElementById(target);if(!el)return;
+  const items=(Array.isArray(list)?list:[]).filter(p=>p&&p.active);
+  el.innerHTML=items.length
+    ?items.slice(0,limit).map(card).join('')
+    :'<div class="lh-empty-category" role="status" style="grid-column:1/-1;padding:22px;color:#737970">Products coming soon in this category. Please check back soon.</div>';
+}
 function renderCategoryWithMore(category,target){
   const items=state.products.filter(p=>p.category===category&&p.active);
   const grid=document.getElementById(target);
@@ -134,6 +156,7 @@ async function load(){
   state.config=cfg;
   const d=await api('/api/products');
   state.products=normalizeStoreProducts(d.products||[]);
+  reconcileSavedShoppingState();
   renderStoreNavigation();
   render(state.products,'productGrid',8);
   refreshStoreCategoryViews();
@@ -141,7 +164,7 @@ async function load(){
 }
 function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);const title=document.getElementById('productTitle')||document.getElementById('catalogTitle');if(title)title.textContent=cat==='ALL'?'All products':list.length?`The ${String(cat).toLowerCase()} edit.`:`${cat} — products coming soon.`;render(list,'productGrid',40);document.getElementById('featured')?.scrollIntoView({behavior:'smooth'})}
 function toggleWish(id){state.wishlist=state.wishlist.includes(Number(id))?state.wishlist.filter(x=>Number(x)!==Number(id)):[...state.wishlist,Number(id)];save();render(state.products,'productGrid',8);refreshStoreCategoryViews()}
-function addCart(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||p.stock<1)return alert('Out of stock');const i=state.cart.find(x=>Number(x.id)===Number(id));if(i){if(i.qty>=p.stock)return alert('Maximum available stock reached');i.qty++}else state.cart.push({id:Number(id),qty:1});save()}
+function addCart(id){const p=state.products.find(x=>Number(x.id)===Number(id));if(!p||!p.active||p.stock<1)return alert('This product is currently unavailable.');const i=state.cart.find(x=>Number(x.id)===Number(id));if(i){if(i.qty>=p.stock)return alert('Maximum available stock reached');i.qty++}else state.cart.push({id:Number(id),qty:1});save();if(typeof toast==='function')toast('Added to your bag')}
 function buyNow(id){state.cart=[{id:Number(id),qty:1}];save();openCheckout()}
 function openCart(){document.getElementById('cartOverlay').classList.add('show');renderCart()}
 function closeCart(){document.getElementById('cartOverlay').classList.remove('show')}
@@ -623,17 +646,18 @@ if(searchInput){
       searchResults.innerHTML='';
       return;
     }
-    const hits=state.products.filter(p=>
-      (p.name+' '+p.category+' '+JSON.stringify(p.specifications||{}))
+    const hits=state.products.filter(p=>p.active&&
+      (String(p.name||'')+' '+String(p.category||'')+' '+JSON.stringify(p.specifications||{}))
       .toLowerCase()
       .includes(q)
     ).slice(0,5);
     searchResults.innerHTML=hits.length
-      ?hits.map(p=>`<button class="result" type="button" style="width:100%;background:#fff;border:0;text-align:left" onclick="openProduct(${p.id})"><span>${p.name}<small style="display:block;color:#818680">${rupee(p.price)}</small></span></button>`).join('')
-      :'<div style="padding:15px;color:#777;font-size:12px">No products found.</div>';
+      ?hits.map(p=>`<button class="result" type="button" style="width:100%;background:#fff;border:0;text-align:left" onclick="searchOpenProduct(${Number(p.id)})"><span>${escapeHTML(p.name)}<small style="display:block;color:#818680">${rupee(p.price)}</small></span></button>`).join('')
+      :'<div role="status" style="padding:15px;color:#777;font-size:12px">No matching products found. Try another name or category.</div>';
     searchResults.classList.add('show');
   });
 }
+function searchOpenProduct(id){if(searchResults)searchResults.classList.remove('show');if(searchInput)searchInput.blur();openProduct(id)}
 document.addEventListener('click',e=>{
   if(!e.target.closest('.search')&&searchResults){
     searchResults.classList.remove('show');
