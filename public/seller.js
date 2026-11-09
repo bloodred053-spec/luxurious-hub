@@ -5,7 +5,7 @@ let productCache=[];
 let orderCache=[];
 let currentSellerView='overview';
 const sellerApp=document.getElementById('sellerApp');
-const SELLER_CATEGORIES=['Watches','Perfumes','Attar','Wireless Speakers','Wireless Neckband','Wired Earphones','TWS Earbuds','Power Banks','Mobile Accessories','Microphones','Holders & Stands','Headphone','Fans','Data Cables','Charger'];
+const SELLER_CATEGORIES=['Watches','Perfumes','Attar','Wireless Speakers','Wireless Neckband','Wired Earphones','TWS Earbuds','Power Banks','Mobile Accessories','Microphones','Holders & Stands','Headphone','Fans','Data Cables','Charger','Mobiles & Smartphones','Computers & Accessories','TVs & Home Entertainment','Large Appliances','Home & Kitchen','Kitchen & Dining','Furniture','Home Improvement','Garden & Outdoors','Clothing & Fashion','Shoes & Handbags','Jewellery','Beauty & Personal Care','Health & Household','Grocery & Gourmet Foods','Books','Office Products','Toys & Games','Baby Products','Sports & Fitness','Automotive','Pet Supplies','Musical Instruments','Luggage & Travel','Industrial & Scientific','Video Games & Consoles','Movies & Music','Gift Cards & Gifts'];
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 async function sellerApi(path,opt={}){

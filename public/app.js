@@ -29,21 +29,49 @@ function reconcileSavedShoppingState(){
 }
 const ph={Watches:'ph-watch',Perfumes:'ph-perfume',Attar:'ph-attar','Mobile Accessories':'ph-tech','Wireless Speakers':'ph-tech','Wireless Neckband':'ph-tech','Wired Earphones':'ph-tech','TWS Earbuds':'ph-tech','Power Banks':'ph-tech','Microphones':'ph-tech','Holders & Stands':'ph-tech','Headphone':'ph-tech','Fans':'ph-tech','Data Cables':'ph-tech','Charger':'ph-tech'};
 const STORE_CATEGORIES=[
-  {name:'Watches',image:'/assets/categories/watches.webp',id:'watches',kicker:'THE TIME EDIT',title:'Make every moment count.'},
-  {name:'Perfumes',image:'/assets/categories/perfumes.webp',id:'perfumes',kicker:'THE FRAGRANCE EDIT',title:'Find your signature scent.'},
-  {name:'Attar',image:'/assets/categories/attar.webp',id:'attar',kicker:'THE ATTAR EDIT',title:'Quiet, lasting, unforgettable.'},
-  {name:'Wireless Speakers',image:'/assets/categories/wireless-speakers.webp',id:'wireless-speakers',kicker:'AUDIO',title:'Bring the sound with you.'},
-  {name:'Wireless Neckband',image:'/assets/categories/wireless-neckband.webp',id:'wireless-neckband',kicker:'WIRELESS AUDIO',title:'Comfort for everyday listening.'},
-  {name:'Wired Earphones',image:'/assets/categories/wired-earphones.webp',id:'wired-earphones',kicker:'AUDIO ESSENTIALS',title:'Plug in and listen.'},
-  {name:'TWS Earbuds',image:'/assets/categories/tws-earbuds.webp',id:'tws-earbuds',kicker:'TRUE WIRELESS',title:'Small size. Big sound.'},
-  {name:'Power Banks',image:'/assets/categories/power-banks.webp',id:'power-banks',kicker:'POWER ON THE GO',title:'Power for wherever you go.'},
-  {name:'Mobile Accessories',image:'/assets/categories/mobile-accessories.webp',id:'mobile-accessories',kicker:'MOBILE ESSENTIALS',title:'Useful extras for your devices.'},
-  {name:'Microphones',image:'/assets/categories/microphones.webp',id:'microphones',kicker:'CREATOR AUDIO',title:'Make yourself heard.'},
-  {name:'Holders & Stands',image:'/assets/categories/holders-stands.webp',id:'holders-stands',kicker:'USEFUL TECH',title:'Hands-free everyday convenience.'},
-  {name:'Headphone',image:'/assets/categories/headphone.webp',id:'headphone',kicker:'PERSONAL AUDIO',title:'Your sound, your space.'},
-  {name:'Fans',image:'/assets/categories/fans.webp',id:'fans',kicker:'EVERYDAY COMFORT',title:'A little comfort on the go.'},
-  {name:'Data Cables',image:'/assets/categories/data-cables.webp',id:'data-cables',kicker:'CONNECTIVITY',title:'Stay connected.'},
-  {name:'Charger',image:'/assets/categories/charger.webp',id:'charger',kicker:'POWER & CHARGING',title:'Power up your everyday.'}
+  {name:'Watches',icon:'⌚',image:'/assets/categories/watches.webp',id:'watches',kicker:'THE TIME EDIT',title:'Make every moment count.'},
+  {name:'Perfumes',icon:'🌸',image:'/assets/categories/perfumes.webp',id:'perfumes',kicker:'THE FRAGRANCE EDIT',title:'Find your signature scent.'},
+  {name:'Attar',icon:'🧴',image:'/assets/categories/attar.webp',id:'attar',kicker:'THE ATTAR EDIT',title:'Quiet, lasting, unforgettable.'},
+  {name:'Wireless Speakers',icon:'🔊',image:'/assets/categories/wireless-speakers.webp',id:'wireless-speakers',kicker:'AUDIO',title:'Bring the sound with you.'},
+  {name:'Wireless Neckband',icon:'🎧',image:'/assets/categories/wireless-neckband.webp',id:'wireless-neckband',kicker:'WIRELESS AUDIO',title:'Comfort for everyday listening.'},
+  {name:'Wired Earphones',icon:'🎧',image:'/assets/categories/wired-earphones.webp',id:'wired-earphones',kicker:'AUDIO ESSENTIALS',title:'Plug in and listen.'},
+  {name:'TWS Earbuds',icon:'🎵',image:'/assets/categories/tws-earbuds.webp',id:'tws-earbuds',kicker:'TRUE WIRELESS',title:'Small size. Big sound.'},
+  {name:'Power Banks',icon:'🔋',image:'/assets/categories/power-banks.webp',id:'power-banks',kicker:'POWER ON THE GO',title:'Power for wherever you go.'},
+  {name:'Mobile Accessories',icon:'📱',image:'/assets/categories/mobile-accessories.webp',id:'mobile-accessories',kicker:'MOBILE ESSENTIALS',title:'Useful extras for your devices.'},
+  {name:'Microphones',icon:'🎙️',image:'/assets/categories/microphones.webp',id:'microphones',kicker:'CREATOR AUDIO',title:'Make yourself heard.'},
+  {name:'Holders & Stands',icon:'📐',image:'/assets/categories/holders-stands.webp',id:'holders-stands',kicker:'USEFUL TECH',title:'Hands-free everyday convenience.'},
+  {name:'Headphone',icon:'🎧',image:'/assets/categories/headphone.webp',id:'headphone',kicker:'PERSONAL AUDIO',title:'Your sound, your space.'},
+  {name:'Fans',icon:'🌀',image:'/assets/categories/fans.webp',id:'fans',kicker:'EVERYDAY COMFORT',title:'A little comfort on the go.'},
+  {name:'Data Cables',icon:'🔌',image:'/assets/categories/data-cables.webp',id:'data-cables',kicker:'CONNECTIVITY',title:'Stay connected.'},
+  {name:'Charger',icon:'⚡',image:'/assets/categories/charger.webp',id:'charger',kicker:'POWER & CHARGING',title:'Power up your everyday.'},
+  {name:'Mobiles & Smartphones',icon:'📱',image:'',id:'mobiles-smartphones',kicker:'MOBILES',title:'Find your next phone.'},
+  {name:'Computers & Accessories',icon:'💻',image:'',id:'computers-accessories',kicker:'COMPUTING',title:'Work, create and play.'},
+  {name:'TVs & Home Entertainment',icon:'📺',image:'',id:'tv-home-entertainment',kicker:'ENTERTAINMENT',title:'Bring entertainment home.'},
+  {name:'Large Appliances',icon:'🧊',image:'',id:'large-appliances',kicker:'APPLIANCES',title:'Make home life easier.'},
+  {name:'Home & Kitchen',icon:'🏠',image:'',id:'home-kitchen',kicker:'HOME',title:'Make every room yours.'},
+  {name:'Kitchen & Dining',icon:'🍽️',image:'',id:'kitchen-dining',kicker:'KITCHEN',title:'Everyday cooking essentials.'},
+  {name:'Furniture',icon:'🛋️',image:'',id:'furniture',kicker:'FURNITURE',title:'Comfort for every space.'},
+  {name:'Home Improvement',icon:'🛠️',image:'',id:'home-improvement',kicker:'HOME IMPROVEMENT',title:'Upgrade your space.'},
+  {name:'Garden & Outdoors',icon:'🪴',image:'',id:'garden-outdoors',kicker:'OUTDOORS',title:'Bring your spaces to life.'},
+  {name:'Clothing & Fashion',icon:'👕',image:'',id:'clothing-fashion',kicker:'FASHION',title:'Find your everyday style.'},
+  {name:'Shoes & Handbags',icon:'👟',image:'',id:'shoes-handbags',kicker:'FOOTWEAR & BAGS',title:'Step out in style.'},
+  {name:'Jewellery',icon:'💍',image:'',id:'jewellery',kicker:'JEWELLERY',title:'Details that make a statement.'},
+  {name:'Beauty & Personal Care',icon:'💄',image:'',id:'beauty-personal-care',kicker:'BEAUTY',title:'Care for your everyday.'},
+  {name:'Health & Household',icon:'🩺',image:'',id:'health-household',kicker:'HEALTH & WELLNESS',title:'Everyday wellness essentials.'},
+  {name:'Grocery & Gourmet Foods',icon:'🛒',image:'',id:'grocery-gourmet',kicker:'GROCERY',title:'Stock up on favourites.'},
+  {name:'Books',icon:'📚',image:'',id:'books',kicker:'BOOKS',title:'Stories, learning and ideas.'},
+  {name:'Office Products',icon:'🖇️',image:'',id:'office-products',kicker:'OFFICE',title:'Get work done.'},
+  {name:'Toys & Games',icon:'🧸',image:'',id:'toys-games',kicker:'PLAY',title:'Make time for play.'},
+  {name:'Baby Products',icon:'🍼',image:'',id:'baby-products',kicker:'BABY',title:'Little things for little ones.'},
+  {name:'Sports & Fitness',icon:'🏋️',image:'',id:'sports-fitness',kicker:'FITNESS',title:'Move, train and perform.'},
+  {name:'Automotive',icon:'🚗',image:'',id:'automotive',kicker:'AUTO',title:'Essentials for every journey.'},
+  {name:'Pet Supplies',icon:'🐾',image:'',id:'pet-supplies',kicker:'PETS',title:'Care for your companions.'},
+  {name:'Musical Instruments',icon:'🎸',image:'',id:'musical-instruments',kicker:'MUSIC',title:'Make some music.'},
+  {name:'Luggage & Travel',icon:'🧳',image:'',id:'luggage-travel',kicker:'TRAVEL',title:'Ready for the next trip.'},
+  {name:'Industrial & Scientific',icon:'⚙️',image:'',id:'industrial-scientific',kicker:'BUSINESS & INDUSTRY',title:'Tools for work and industry.'},
+  {name:'Video Games & Consoles',icon:'🎮',image:'',id:'video-games',kicker:'GAMING',title:'Level up your play.'},
+  {name:'Movies & Music',icon:'🎬',image:'',id:'movies-music',kicker:'ENTERTAINMENT',title:'Enjoy your favourites.'},
+  {name:'Gift Cards & Gifts',icon:'🎁',image:'',id:'gifts',kicker:'GIFTS',title:'Find something worth giving.'}
 ];
 function guessStoreCategory(name,current='Mobile Accessories'){
   const legacy=['Mobile Accessories','Other Phone Accessories','Wireless Neckbands','Wireless Earbuds','Phone Holders & Stands','Chargers & Cables'];
@@ -74,7 +102,7 @@ function ensureStoreCategoryStyles(){if(document.getElementById('lhStoreCategory
 .lh-category-card{appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:184px;padding:15px 9px;border:1px solid #e6ddcd;border-radius:14px;background:linear-gradient(145deg,#fffdf8 0%,#fff 100%);color:#171b1f;cursor:pointer;text-align:center;box-shadow:0 3px 12px rgba(54,42,21,.045);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
 .lh-category-card:hover,.lh-category-card:focus-visible{transform:translateY(-4px);border-color:#c7a76d;box-shadow:0 12px 26px rgba(83,62,29,.11);outline:none}
 .lh-category-icon{display:grid;place-items:center;width:88px;height:88px;flex:0 0 88px;border-radius:19px;background:#f5f1e8;overflow:hidden}
-.lh-category-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.lh-category-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}.lh-category-emoji{font-size:38px;line-height:1}
 .lh-category-name{font:600 14px/1.35 Inter,Arial,sans-serif;overflow-wrap:anywhere;color:#171b1f}
 .lh-category-link{font:12px/1.2 Inter,Arial,sans-serif;color:#a87935;letter-spacing:.01em;transition:color .2s ease}
 .lh-category-card:hover .lh-category-link{color:#72501d}
@@ -93,7 +121,7 @@ function ensureStoreCategoryStyles(){if(document.getElementById('lhStoreCategory
 @media(max-width:680px){#shop.lh-shop-category-section{padding-top:30px;padding-bottom:30px}#shop.lh-shop-category-section .section-head h2{font-size:clamp(27px,6vw,36px)}.lh-categories-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.lh-category-card{min-height:145px;padding:10px 5px;gap:7px;border-radius:12px}.lh-category-icon{width:66px;height:66px;flex-basis:66px;border-radius:15px}.lh-category-name{font-size:11px}.lh-category-link{font-size:10px}#shop.lh-shop-category-section .section-head .link{font-size:11px}}
 @media(max-width:420px){.lh-categories-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.lh-category-card{min-height:155px}.lh-category-icon{width:72px;height:72px;flex-basis:72px}.lh-category-name{font-size:12px}}
 `;document.head.appendChild(style)}
-function renderStoreCategoryTiles(){ensureStoreCategoryStyles();const grid=document.querySelector('#shop .categories, #shop .category-grid, #shop #categoryGrid');if(!grid)return;grid.classList.add('lh-categories-grid');grid.innerHTML=STORE_CATEGORIES.map(c=>`<button type="button" class="lh-category-card" aria-label="Shop ${c.name}" onclick="showCategory('${c.name}')"><span class="lh-category-icon" aria-hidden="true"><img src="${c.image}" alt="" loading="lazy" width="88" height="88"></span><span class="lh-category-name">${c.name}</span><span class="lh-category-link">Explore →</span></button>`).join('');const shop=document.getElementById('shop');if(shop){shop.classList.add('lh-shop-category-section');const kicker=shop.querySelector('.eyebrow');const heading=shop.querySelector('h2');if(kicker)kicker.textContent='SHOP BY CATEGORY';if(heading)heading.innerHTML='Shop by <span class="lh-heading-accent">Category</span>';}}
+function renderStoreCategoryTiles(){ensureStoreCategoryStyles();const grid=document.querySelector('#shop .categories, #shop .category-grid, #shop #categoryGrid');if(!grid)return;grid.classList.add('lh-categories-grid');grid.innerHTML=STORE_CATEGORIES.map(c=>`<button type="button" class="lh-category-card" aria-label="Shop ${c.name}" onclick="showCategory('${c.name}')"><span class="lh-category-icon" aria-hidden="true">${c.image?`<img src="${c.image}" alt="" loading="lazy" width="88" height="88">`:`<span class="lh-category-emoji">${c.icon||'🛍️'}</span>`}</span><span class="lh-category-name">${c.name}</span><span class="lh-category-link">Explore →</span></button>`).join('');const shop=document.getElementById('shop');if(shop){shop.classList.add('lh-shop-category-section');const kicker=shop.querySelector('.eyebrow');const heading=shop.querySelector('h2');if(kicker)kicker.textContent='SHOP BY CATEGORY';if(heading)heading.innerHTML='Shop by <span class="lh-heading-accent">Category</span>';}}
 function renderStoreNavigation(){const nav=document.querySelector('.navlinks');if(!nav)return;nav.classList.add('lh-category-nav');nav.innerHTML=`<a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Shop All Categories</a><a href="#watches" onclick="showCategory('Watches');return false">Watches</a><a href="#perfumes" onclick="showCategory('Perfumes');return false">Perfumes</a><a href="#attar" onclick="showCategory('Attar');return false">Attar</a><a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Audio & Accessories</a><a href="#offers">Offers</a>`;}
 function findStoreGrid(targetIds,sectionIds){for(const id of targetIds){if(document.getElementById(id))return document.getElementById(id)}for(const id of sectionIds){const section=document.getElementById(id);const grid=section?.querySelector('.grid,.product-grid');if(grid){if(!grid.id)grid.id='lhGrid-'+id;return grid}}return null}
 function renderStoreCategorySections(){
@@ -492,8 +520,7 @@ async function adminEditProduct(id) {
       <label style="${labelStyle}">
         3. Product Category
         <select id="pc" style="${inputStyle}">
-          <option>Watches</option><option>Perfumes</option><option>Attar</option>
-          <option>Wireless Speakers</option><option>Wireless Neckband</option><option>Wired Earphones</option><option>TWS Earbuds</option><option>Power Banks</option><option>Mobile Accessories</option><option>Microphones</option><option>Holders &amp; Stands</option><option>Headphone</option><option>Fans</option><option>Data Cables</option><option>Charger</option>
+${STORE_CATEGORIES.map(category=>`<option value="${safe(category.name)}">${safe(category.name)}</option>`).join('')}
         </select>
       </label>
 
