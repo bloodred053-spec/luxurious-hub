@@ -1,30 +1,11 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Luxurious Hub | Shop Electronics, Fashion, Home, Beauty & More</title><meta name="description" content="Shop mobiles, electronics, fashion, beauty, home, kitchen, watches, perfumes and more at Luxurious Hub."><link rel="stylesheet" href="/styles.css"></head><body>
 <div class="topbar"><span>A little luxury, every day.</span><span>Free shipping above ₹499</span><span>Cash on Delivery available</span></div>
-<header class="header"><div class="shell"><div class="head"><a class="brand" href="/"><div class="logo">LH</div><div><strong>LUXURIOUS HUB</strong><span>THE EVERYDAY EDIT</span></div></a><div class="search"><input id="search" placeholder="Search for your next favourite..."></div><div class="actions"><button class="action" onclick="openAccount()">Account</button><button class="action" onclick="openWishlist()">Wishlist <span id="wishCount">0</span></button><button class="action" onclick="openCart()">Bag <span id="bagCount">0</span></button></div><nav>
-  <div class="navlinks">
-    <a href="#shop">Shop All</a>
-    <a href="#watches">Watches</a>
-    <a href="#perfumes">Perfumes</a>
-    <a href="#attar">Attar</a>
-    <a href="#accessories">Mobile Accessories</a>
-    <a href="#offers">The Offer Edit</a>
-    <a href="#track" onclick="trackOrder();return false">Track your order →</a>
-  </div>
-
-  <button class="mobile-menu-btn" type="button" onclick="document.getElementById('mobileMenu').classList.toggle('show')">
-    ☰ Menu
-  </button>
-
-  <div id="mobileMenu" class="mobile-menu">
-    <a href="#shop" onclick="document.getElementById('mobileMenu').classList.remove('show')">Shop All</a>
-    <a href="#watches" onclick="document.getElementById('mobileMenu').classList.remove('show')">Watches</a>
-    <a href="#perfumes" onclick="document.getElementById('mobileMenu').classList.remove('show')">Perfumes</a>
-    <a href="#attar" onclick="document.getElementById('mobileMenu').classList.remove('show')">Attar</a>
-    <a href="#accessories" onclick="document.getElementById('mobileMenu').classList.remove('show')">Mobile Accessories</a>
-    <a href="#offers" onclick="document.getElementById('mobileMenu').classList.remove('show')">The Offer Edit</a>
-    <a href="#track" onclick="document.getElementById('mobileMenu').classList.remove('show');trackOrder();return false">Track your order →</a>
-  </div>
-</nav></div></div></header>
+<header class="header"><div class="shell"><div class="head">
+<a class="brand" href="/"><div class="logo">LH</div><div><strong>LUXURIOUS HUB</strong><span>THE EVERYDAY EDIT</span></div></a>
+<div class="market-search"><select id="searchCategory" aria-label="Search category"><option value="ALL">All Categories</option><option>Watches</option><option>Perfumes</option><option>Attar</option><option>Mobiles & Smartphones</option><option>Computers & Accessories</option><option>Wireless Speakers</option><option>Power Banks</option><option>Clothing & Fashion</option><option>Home & Kitchen</option></select><div class="search"><input id="search" placeholder="Search products, brands and more..." autocomplete="off"><div id="searchResults" class="search-results"></div></div><button class="search-submit" type="button" onclick="submitStoreSearch()" aria-label="Search">⌕</button></div>
+<div class="actions"><button class="action" onclick="openAccount()">Account</button><button class="action" onclick="trackOrder()">Orders</button><button class="action" onclick="openWishlist()">Wishlist <span id="wishCount">0</span></button><button class="action" onclick="openCart()">Cart <span id="bagCount">0</span></button></div>
+<nav><div class="navlinks"><a href="#shop">Shop All Categories</a><a href="#offers">Today's Deals</a><a href="/seller.html" class="sell-link">Sell on Luxurious Hub</a><a href="#track" onclick="trackOrder();return false">Track Order</a></div><button class="mobile-menu-btn" type="button" onclick="document.getElementById('mobileMenu').classList.toggle('show')">☰ Menu</button><div id="mobileMenu" class="mobile-menu"><a href="#shop" onclick="document.getElementById('mobileMenu').classList.remove('show')">Shop All Categories</a><a href="#offers" onclick="document.getElementById('mobileMenu').classList.remove('show')">Today's Deals</a><a href="/seller.html">Sell on Luxurious Hub</a><a href="#" onclick="trackOrder();return false">Orders / Track Order</a><a href="#" onclick="openWishlist();return false">Wishlist</a><a href="#" onclick="openCart();return false">Cart</a></div></nav>
+</div></div></header>
 <main><div class="shell">
 <section class="hero"><div class="hero-copy"><div class="eyebrow">Curated for your everyday</div><h1>Style. Fragrance. <em>Tech.</em><br><em>All in one place.</em></h1><p>Shop watches, perfumes, attars and mobile accessories with a premium everyday edit.</p><div class="cta"><button class="btn" onclick="showCategory('Watches')">Shop Watches →</button><button class="btn alt" onclick="showCategory('Perfumes')">Explore Perfumes</button></div><button class="btn ghost" onclick="showCategory('Mobile Accessories')">Discover everyday tech →</button></div><div class="hero-art"><div class="watch-art"><div class="watch-face"></div></div></div></section>
 <div class="benefits"><div>Free delivery above ₹499</div><div>Cash on Delivery</div><div>Thoughtfully selected</div><div>Everyday value</div></div>
@@ -39,5 +20,5 @@
 </div></main>
 <footer><div class="shell footer"><div class="footer-brand"><div class="brand"><div class="logo">LH</div><div><strong>LUXURIOUS HUB</strong><span>THE EVERYDAY EDIT</span></div></div><p class="muted" style="margin-top:12px">A little luxury.<br>For every part of your day.</p></div><div><strong>Explore</strong><a href="#watches">Watches</a><a href="#perfumes">Perfumes</a><a href="#attar">Attar</a><a href="#accessories">Mobile Accessories</a><a href="/seller.html">Become a Seller</a></div><div><strong>Customer care</strong><a href="#" onclick="trackOrder();return false">Track Order</a><a href="#" onclick="openContact();return false">Contact Us</a><a href="#" onclick="openPolicy('Shipping Policy');return false">Shipping Policy</a><a href="#" onclick="openPolicy('Returns & Refunds');return false">Returns & Refunds</a></div><div><strong>Luxurious Hub</strong><a href="#" onclick="openPolicy('About Us');return false">About Us</a><a href="#" onclick="openPolicy('Privacy Policy');return false">Privacy Policy</a><a href="#" onclick="openPolicy('Terms & Conditions');return false">Terms & Conditions</a><a href="#" onclick="openAdmin();return false">Store Admin</a></div></div><div class="shell bottom"><span>© 2026 Luxurious Hub</span><span>Made for your everyday · COD · INR ₹</span></div></footer>
 <div id="cartOverlay" class="overlay"><div class="drawer"><div class="drawer-head"><h2>Your Bag</h2><button class="action" onclick="closeCart()">✕</button></div><div id="cartItems"></div><div id="cartSummary"></div></div></div><div id="modal" class="modal"><div class="modal-card" id="modalCard"><div id="modalContent"></div></div></div>
-<div class="mobilebar"><button onclick="showCategory('Watches')">Watches</button><button onclick="showCategory('Perfumes')">Perfumes</button><button onclick="showCategory('Attar')">Attar</button><button onclick="openWishlist()">Wishlist</button><button class="active" onclick="openCart()">Bag <span id="mobileBagCount">0</span></button></div>
+<div class="mobilebar"><button onclick="window.scrollTo({top:0,behavior:'smooth'})">Home</button><button onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'})">Categories</button><button onclick="openAccount()">Account</button><button onclick="openWishlist()">Wishlist</button><button class="active" onclick="openCart()">Cart <span id="mobileBagCount">0</span></button></div>
 <script src="/app.js"></script></body></html>

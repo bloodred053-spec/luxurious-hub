@@ -1,4 +1,4 @@
-const BUILD_VERSION='2026-11-05-storefront-phase-3';
+const BUILD_VERSION='2026-11-09-marketplace-phase-4';
 function readStoredArray(key){
   try{
     const value=JSON.parse(localStorage.getItem(key)||'[]');
@@ -122,7 +122,7 @@ function ensureStoreCategoryStyles(){if(document.getElementById('lhStoreCategory
 @media(max-width:420px){.lh-categories-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.lh-category-card{min-height:155px}.lh-category-icon{width:72px;height:72px;flex-basis:72px}.lh-category-name{font-size:12px}}
 `;document.head.appendChild(style)}
 function renderStoreCategoryTiles(){ensureStoreCategoryStyles();const grid=document.querySelector('#shop .categories, #shop .category-grid, #shop #categoryGrid');if(!grid)return;grid.classList.add('lh-categories-grid');grid.innerHTML=STORE_CATEGORIES.map(c=>`<button type="button" class="lh-category-card" aria-label="Shop ${c.name}" onclick="showCategory('${c.name}')"><span class="lh-category-icon" aria-hidden="true">${c.image?`<img src="${c.image}" alt="" loading="lazy" width="88" height="88">`:`<span class="lh-category-emoji">${c.icon||'🛍️'}</span>`}</span><span class="lh-category-name">${c.name}</span><span class="lh-category-link">Explore →</span></button>`).join('');const shop=document.getElementById('shop');if(shop){shop.classList.add('lh-shop-category-section');const kicker=shop.querySelector('.eyebrow');const heading=shop.querySelector('h2');if(kicker)kicker.textContent='SHOP BY CATEGORY';if(heading)heading.innerHTML='Shop by <span class="lh-heading-accent">Category</span>';}}
-function renderStoreNavigation(){const nav=document.querySelector('.navlinks');if(!nav)return;nav.classList.add('lh-category-nav');nav.innerHTML=`<a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Shop All Categories</a><a href="#watches" onclick="showCategory('Watches');return false">Watches</a><a href="#perfumes" onclick="showCategory('Perfumes');return false">Perfumes</a><a href="#attar" onclick="showCategory('Attar');return false">Attar</a><a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">Audio & Accessories</a><a href="#offers">Offers</a>`;}
+function renderStoreNavigation(){const nav=document.querySelector('.navlinks');if(!nav)return;nav.classList.add('lh-category-nav');nav.innerHTML=`<a href="#shop" onclick="document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});return false">All Categories</a><a href="#offers">Today's Deals</a><a href="#featured" onclick="showCategory('ALL');return false">New Arrivals</a><a href="/seller.html" class="sell-link">Sell on Luxurious Hub</a><a href="#" onclick="trackOrder();return false">Orders & Returns</a>`;}
 function findStoreGrid(targetIds,sectionIds){for(const id of targetIds){if(document.getElementById(id))return document.getElementById(id)}for(const id of sectionIds){const section=document.getElementById(id);const grid=section?.querySelector('.grid,.product-grid');if(grid){if(!grid.id)grid.id='lhGrid-'+id;return grid}}return null}
 function renderStoreCategorySections(){
   const fixed=[
@@ -153,7 +153,9 @@ function card(p){
   const image=safeImageUrl(productImage(p,'listing'));
   const wished=state.wishlist.includes(id);
   const rating=Number(p.rating);
-  return `<article class="product" data-product-id="${id}"><div class="product-media">${image?`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`:placeholder(p.category)}<span class="badge">${escapeHTML(p.tag||'New')}</span><button class="heart" type="button" aria-label="${wished?'Remove':'Add'} ${escapeHTML(p.name)} ${wished?'from':'to'} wishlist" aria-pressed="${wished}" onclick="toggleWish(${id})">${wished?'♥':'♡'}</button></div><div class="meta"><div class="muted">${escapeHTML(p.category)}</div><div class="name">${escapeHTML(p.name)}</div><div class="muted">${Number.isFinite(rating)&&rating>0?rating.toFixed(1)+' ★':'New'} · ${stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(price)}</span>${off?`<span class="mrp">${rupee(mrp)}</span><span class="off">${off}% off</span>`:''}</div><div class="mini-actions"><button class="mini" ${stock<1?'disabled':''} onclick="addCart(${id})">＋ Add to Cart</button><button class="mini" ${stock<1?'disabled':''} onclick="buyNow(${id})">Buy Now</button></div></div></article>`;
+  const sellerName=p.seller_business_name||'Luxurious Hub';
+  const sellerLink=p.public_seller_id?`<a class="seller-by" href="/seller-store.html?id=${Number(p.public_seller_id)}" onclick="event.stopPropagation()">Sold by <strong>${escapeHTML(sellerName)}</strong></a>`:`<span class="seller-by">Sold by <strong>Luxurious Hub</strong></span>`;
+  return `<article class="product" data-product-id="${id}" onclick="openProductPage(${id})"><div class="product-media">${image?`<img src="${escapeHTML(image)}" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async">`:placeholder(p.category)}<span class="badge">${escapeHTML(p.tag||'New')}</span><button class="heart" type="button" aria-label="${wished?'Remove':'Add'} ${escapeHTML(p.name)} ${wished?'from':'to'} wishlist" aria-pressed="${wished}" onclick="event.stopPropagation();toggleWish(${id})">${wished?'♥':'♡'}</button></div><div class="meta"><div class="muted">${escapeHTML(p.category)}</div><div class="name">${escapeHTML(p.name)}</div><div class="muted">${Number.isFinite(rating)&&rating>0?rating.toFixed(1)+' ★':'New'} · ${stock>0?'In stock':'Out of stock'}</div><div class="prices"><span class="price">${rupee(price)}</span>${off?`<span class="mrp">${rupee(mrp)}</span><span class="off">${off}% off</span>`:''}</div>${sellerLink}<div class="mini-actions"><button class="mini" ${stock<1?'disabled':''} onclick="event.stopPropagation();addCart(${id})">＋ Add to Cart</button><button class="mini" ${stock<1?'disabled':''} onclick="event.stopPropagation();buyNow(${id})">Buy Now</button></div></div></article>`;
 }
 function render(list,target,limit=8){
   const el=document.getElementById(target);if(!el)return;
@@ -204,9 +206,11 @@ async function load(){
   state.products=normalizeStoreProducts(d.products||[]);
   reconcileSavedShoppingState();
   renderStoreNavigation();
+  const categorySelect=document.getElementById('searchCategory');if(categorySelect){categorySelect.innerHTML='<option value="ALL">All Categories</option>'+STORE_CATEGORIES.map(c=>`<option value="${escapeHTML(c.name)}">${escapeHTML(c.name)}</option>`).join('');}
   render(state.products,'productGrid',8);
   refreshStoreCategoryViews();
   updateCounts();
+  if(new URLSearchParams(location.search).get('cart')==='1'){history.replaceState({},'', '/');openCart();}
 }
 function showCategory(cat){const list=cat==='ALL'?state.products:state.products.filter(p=>p.category===cat);const title=document.getElementById('productTitle')||document.getElementById('catalogTitle');if(title)title.textContent=cat==='ALL'?'All products':list.length?`The ${String(cat).toLowerCase()} edit.`:`${cat} — products coming soon.`;render(list,'productGrid',40);document.getElementById('featured')?.scrollIntoView({behavior:'smooth'})}
 function toggleWish(id){state.wishlist=state.wishlist.includes(Number(id))?state.wishlist.filter(x=>Number(x)!==Number(id)):[...state.wishlist,Number(id)];save();render(state.products,'productGrid',8);refreshStoreCategoryViews()}
@@ -731,6 +735,7 @@ function toggleFaq(btn){btn.parentElement.classList.toggle('open')}
 const searchInput=document.getElementById('searchInput')||document.getElementById('search');
 let searchResults=document.getElementById('searchResults');
 if(searchInput){
+  searchInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitStoreSearch();if(searchResults)searchResults.classList.remove('show')}});
   if(!searchResults){
     searchResults=document.createElement('div');
     searchResults.id='searchResults';
@@ -744,7 +749,8 @@ if(searchInput){
       searchResults.innerHTML='';
       return;
     }
-    const hits=state.products.filter(p=>p.active&&
+    const selectedCategory=document.getElementById('searchCategory')?.value||'ALL';
+    const hits=state.products.filter(p=>p.active&&(selectedCategory==='ALL'||p.category===selectedCategory)&&
       (String(p.name||'')+' '+String(p.category||'')+' '+JSON.stringify(p.specifications||{}))
       .toLowerCase()
       .includes(q)
@@ -755,7 +761,9 @@ if(searchInput){
     searchResults.classList.add('show');
   });
 }
-function searchOpenProduct(id){if(searchResults)searchResults.classList.remove('show');if(searchInput)searchInput.blur();openProduct(id)}
+function openProductPage(id){window.location.href='/product.html?id='+encodeURIComponent(id)}
+function submitStoreSearch(){const q=(searchInput?.value||'').trim();const category=document.getElementById('searchCategory')?.value||'ALL';if(category!=='ALL'){showCategory(category);if(q){const filtered=state.products.filter(p=>p.active&&p.category===category&&(p.name+' '+p.category).toLowerCase().includes(q.toLowerCase()));render(filtered,'productGrid',40)}return;}if(q){const hits=state.products.filter(p=>p.active&&(p.name+' '+p.category+' '+JSON.stringify(p.specifications||{})).toLowerCase().includes(q.toLowerCase()));const title=document.getElementById('catalogTitle');if(title)title.textContent='Search results for “'+q+'”';render(hits,'productGrid',40);document.getElementById('featured')?.scrollIntoView({behavior:'smooth'});}}
+function searchOpenProduct(id){if(searchResults)searchResults.classList.remove('show');if(searchInput)searchInput.blur();openProductPage(id)}
 document.addEventListener('click',e=>{
   if(!e.target.closest('.search')&&searchResults){
     searchResults.classList.remove('show');
@@ -794,7 +802,7 @@ document.addEventListener('click',e=>{
   if(!article)return;
   const name=article.querySelector('.name')?.textContent?.trim();
   const product=state.products.find(p=>String(p.name).trim()===name);
-  if(product)openProduct(product.id);
+  if(product)openProductPage(product.id);
 });
 
 (function addPhase3Styles(){
