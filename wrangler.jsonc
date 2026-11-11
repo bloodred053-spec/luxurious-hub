@@ -2,6 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "luxurious-hub",
   "main": "src/worker.js",
+"account_id": "c92a1e50db0f5c0aae1b22a6617952ef",
   "compatibility_date": "2026-09-22",
   "assets": {
     "directory": "./public",
